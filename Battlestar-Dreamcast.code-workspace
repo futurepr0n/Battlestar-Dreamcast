@@ -4,7 +4,13 @@
 			"path": "."
 		}
 	],
-	"settings": {
-        
-    }
+"settings": {
+		"terminal.integrated.profiles.osx": {
+			"Dreamcast-Shell": {
+				"path": "zsh",
+				"args": ["-c", "source /opt/toolchains/dc/kos/environ.sh; zsh"]
+			}
+		},
+		"terminal.integrated.defaultProfile.osx": "Dreamcast-Shell"
+	}
 }

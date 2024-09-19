@@ -52,9 +52,6 @@ void *mod_callback(snd_stream_hnd_t hnd, int len, int * actual) {
     return sound_buffer;
 }
 
-
-
-
 void draw_background(void) {
     pvr_poly_cxt_t cxt;
     pvr_poly_hdr_t hdr;
@@ -287,17 +284,13 @@ void draw_scene(void) {
     pvr_list_begin(PVR_LIST_TR_POLY);
     draw_scrolling_background(x_offset);
     moveStuff();
-    //draw_ship(); // Uncommented and moved inside the translucent polygon list
-    
     float deltaTime = getDeltaTime(); // Implement this to calculate time between frames
     blitObj(player);
     blitEnemies(deltaTime);
     blitObj(battlestar);
-    //blitEnemies();
-
     pvr_list_finish();
-
     pvr_scene_finish();
+
 
     x_offset -= 1.0f;
     if (x_offset <= -640.0f) {
@@ -310,7 +303,7 @@ void draw_scene(void) {
 int main(int argc, char **argv) {
     int done = 0;
 
-    /* from mp3test.c */
+    /* controller initialization */
     maple_device_t *cont;
     cont_state_t *state;
     /* -------------- */
@@ -327,11 +320,8 @@ int main(int argc, char **argv) {
 
     /* init splash screen */
     initSplash();
-
     initStorySplash();
-
     loadCharacterData(); // loadobj.cpp
-    
 
     printf("modplug_test beginning\n");
 
@@ -392,9 +382,7 @@ int main(int argc, char **argv) {
 
     while(1) {
 
-        
         draw_scene();
-    
         /* Check key status */
         cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
 

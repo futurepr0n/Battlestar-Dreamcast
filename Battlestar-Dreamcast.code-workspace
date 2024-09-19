@@ -5,14 +5,6 @@
 		}
 	],
 	"settings": {
-        "auto-run-command.commands": [
-            {
-                "command": "workbench.action.terminal.sendSequence",
-                "args": {
-                    "text": "echo 'Workspace auto-loaded!'; source /opt/toolchains/dc/kos/environ.sh; zsh\n"
-                },
-                "when": "workspaceContains:.vscode"
-            }
-        ]
+        
     }
 }

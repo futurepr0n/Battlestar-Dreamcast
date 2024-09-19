@@ -4,10 +4,5 @@
 			"path": "."
 		}
 	],
-	"settings": {
-		"terminal.integrated.shellArgs.osx": [
-        "-c",
-        "echo 'Workspace loaded!'; source /opt/toolchains/dc/kos/environ.sh; zsh"
-    ]
-	}
+	"settings": {}
 }

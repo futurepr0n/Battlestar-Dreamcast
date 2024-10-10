@@ -1,5 +1,5 @@
 TARGET = battlestar.elf
-OBJS = main.o loadobj.o blitobj.o movement.o initstorysplash.o wfont.o romdisk.o 
+OBJS = main.o audio_system.o loadobj.o blitobj.o movement.o initstorysplash.o wfont.o romdisk.o 
 KOS_ROMDISK_DIR = romdisk
 
 all: rm-elf $(TARGET)

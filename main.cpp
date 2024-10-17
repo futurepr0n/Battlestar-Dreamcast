@@ -19,6 +19,7 @@
 #include "audio_system.h"
 #include "renderer.hpp"
 #include "game_utils.hpp"
+#include "menu_system.hpp"
 
 #include <cmath>
 #include <chrono>
@@ -39,6 +40,9 @@ int main(int argc, char **argv) {
 
     /* init splash screen */
     initSplash();
+
+    showMainMenu();
+
     initStorySplash();
     loadCharacterData(); // loadobj.cpp
 

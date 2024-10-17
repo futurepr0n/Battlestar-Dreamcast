@@ -11,6 +11,9 @@
 				"args": ["-c", "source /opt/toolchains/dc/kos/environ.sh; zsh"]
 			}
 		},
-		"terminal.integrated.defaultProfile.osx": "Dreamcast-Shell"
+		"terminal.integrated.defaultProfile.osx": "Dreamcast-Shell",
+		"files.associations": {
+			"vector": "cpp"
+		}
 	}
 }

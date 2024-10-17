@@ -1,4 +1,5 @@
 #include "menu_system.hpp"
+#include "name_selection.hpp"
 #include <png/png.h>
 
 extern char wfont[];
@@ -170,7 +171,13 @@ void showMainMenu() {
                     // Handle menu selection
                     switch (menu.getSelectedIndex()) {
                         case 0: // Start Game
+                        {
+                            NameSelection nameScreen;
+                            std::string playerName = nameScreen.run();
+                            // You can now use playerName in your game
+                            printf("Player name: %s\n", playerName.c_str());
                             return;
+                        }
                         case 1: // Options
                             // Implement options menu
                             break;

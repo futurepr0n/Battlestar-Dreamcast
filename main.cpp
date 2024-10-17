@@ -20,12 +20,13 @@
 #include "renderer.hpp"
 #include "game_utils.hpp"
 #include "menu_system.hpp"
+#include "name_selection.hpp" 
 
 #include <cmath>
 #include <chrono>
 
 int mybullets = 0;
-
+std::string playerName;
 
 int main(int argc, char **argv) {
     int done = 0;

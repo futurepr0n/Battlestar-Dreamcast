@@ -147,6 +147,7 @@ void loadEnemies() {
 		enemy[i].hitbox_offset_y = 22;
 		enemy[i].hitbox_width = (52-11);
 		enemy[i].hitbox_height = (41-22);
+		enemy[i].deathPoints = 10;
 
 		  // Set initial Y position within the screen height
         enemy[i].initialY = 1 + (rand() % (480 - 64)); // Adjust based on screen height and enemy height
@@ -234,6 +235,7 @@ void loadEnemyBattlestar(){
 	battlestar.hitbox_height = (120-9);
 	battlestar.damage_state = 0;
     battlestar.isalive = 1;
+	battlestar.deathPoints = 100;
 
 	loadEnemyBattlestarTextures();
 

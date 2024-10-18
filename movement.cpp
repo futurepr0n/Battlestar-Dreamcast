@@ -1,6 +1,7 @@
 #include "movement.hpp"
 #include "loadobj.hpp"
 #include "blitobj.hpp"
+#include "game_state.hpp"
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
 
@@ -72,6 +73,7 @@ int checkCollision(obj* obj1, obj* obj2) {
                 
                 if (battlestar.health <= 0) {
                     battlestar.isalive = 0;
+                    GameState::getInstance().addScore(battlestar.deathPoints);
                 }
             }
         } else {
@@ -90,6 +92,7 @@ int checkCollision(obj* obj1, obj* obj2) {
                 
                 if (obj2->health <= 0) {
                     obj2->isalive = 0;
+                    GameState::getInstance().addScore(obj2->deathPoints);
                 }
             }
         }

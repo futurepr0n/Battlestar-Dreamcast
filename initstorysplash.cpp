@@ -21,7 +21,7 @@ extern "C" {
 } 
 
 /* textures */
-pvr_ptr_t font_tex;
+pvr_ptr_t font_tex2;
 pvr_ptr_t back_tex;
 pvr_ptr_t bsg_back_tex;
 
@@ -57,7 +57,7 @@ void font_init(void) {
     int i, x, y, c;
     unsigned short * temp_tex;
 
-    font_tex = pvr_mem_malloc(256 * 256 * 2);
+    font_tex2 = pvr_mem_malloc(256 * 256 * 2);
     temp_tex = (unsigned short *)malloc(256 * 128 * 2);
 
     c = 0;
@@ -78,7 +78,7 @@ void font_init(void) {
             c += 16;
         }
 
-    pvr_txr_load_ex(temp_tex, font_tex, 256, 256, PVR_TXRLOAD_16BPP);
+    pvr_txr_load_ex(temp_tex, font_tex2, 256, 256, PVR_TXRLOAD_16BPP);
 }
 
 void text_init(void) {
@@ -235,7 +235,7 @@ void draw_string(float x, float y, float z, float a, float r, float g, float b, 
     pvr_poly_hdr_t hdr;
     float orig_x = x;
 
-    pvr_poly_cxt_txr(&cxt, PVR_LIST_TR_POLY, PVR_TXRFMT_ARGB4444, 256, 256, font_tex, PVR_FILTER_BILINEAR);
+    pvr_poly_cxt_txr(&cxt, PVR_LIST_TR_POLY, PVR_TXRFMT_ARGB4444, 256, 256, font_tex2, PVR_FILTER_BILINEAR);
     pvr_poly_compile(&hdr, &cxt);
     pvr_prim(&hdr, sizeof(hdr));
 

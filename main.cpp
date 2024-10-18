@@ -21,12 +21,13 @@
 #include "game_utils.hpp"
 #include "menu_system.hpp"
 #include "name_selection.hpp" 
+#include "game_state.hpp"
 
 #include <cmath>
 #include <chrono>
 
 int mybullets = 0;
-std::string playerName;
+
 
 int main(int argc, char **argv) {
     int done = 0;
@@ -38,11 +39,15 @@ int main(int argc, char **argv) {
 
     /* init kos  */
     pvr_init_defaults();
-
+    load_font_texture();
     /* init splash screen */
     initSplash();
 
-    showMainMenu();
+    std::string playerName = showMainMenu();
+    GameState::getInstance().setPlayerName(playerName);
+    GameState::getInstance().resetScore();
+
+    std::cout << "Debug - Player name set to: " << GameState::getInstance().getPlayerName() << std::endl;
 
     initStorySplash();
 

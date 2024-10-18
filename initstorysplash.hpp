@@ -5,7 +5,7 @@
 
 
 
-extern pvr_ptr_t font_tex;
+extern pvr_ptr_t font_tex2;
 extern pvr_ptr_t back_tex;
 extern pvr_ptr_t bsg_back_tex;
 

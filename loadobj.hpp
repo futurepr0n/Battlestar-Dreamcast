@@ -39,6 +39,7 @@ typedef struct{
 	float phase;
 	float initialX;
 	float initialY;
+	int deathPoints;  // New field for score points
 
 	//int dir;
 	void *img_data;

@@ -144,7 +144,7 @@ int MenuSystem::getSelectedIndex() const {
     return selectedIndex;
 }
 
-void showMainMenu() {
+std::string showMainMenu() {
     MenuSystem menu;
     menu.addMenuItem("Start Game");
     menu.addMenuItem("Options");
@@ -153,6 +153,8 @@ void showMainMenu() {
     maple_device_t *cont;
     cont_state_t *state;
     uint8 prev_buttons = 0;
+
+    std::string playerName;
 
     while (1) {
         cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
@@ -173,10 +175,10 @@ void showMainMenu() {
                         case 0: // Start Game
                         {
                             NameSelection nameScreen;
-                            std::string playerName = nameScreen.run();
-                            // You can now use playerName in your game
-                            printf("Player name: %s\n", playerName.c_str());
-                            return;
+                            playerName = nameScreen.run();
+                            // Debug output
+                            std::cout << "Debug - Player name selected: " << playerName << std::endl;
+                            return playerName;
                         }
                         case 1: // Options
                             // Implement options menu

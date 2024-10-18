@@ -4,6 +4,7 @@
 #include <kos.h>
 #include <vector>
 #include <string>
+#include <iostream>
 
 class MenuSystem {
 public:
@@ -24,6 +25,6 @@ private:
     void drawMenuItem(const std::string& item, float x, float y, bool selected);
 };
 
-void showMainMenu();
+std::string showMainMenu();
 
 #endif // MENU_SYSTEM_HPP

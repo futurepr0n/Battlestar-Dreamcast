@@ -9,6 +9,12 @@
 #include "loadobj.hpp"
 #include "movement.hpp"
 
+// Global texture pointers for enemy damage states
+pvr_ptr_t g_enemy_textures[MAX_DAMAGE_STATES] = {nullptr};
+pvr_ptr_t g_player_textures[MAX_DAMAGE_STATES] = {nullptr};
+pvr_ptr_t g_enemybattlestar_textures[MAX_DAMAGE_STATES] = {nullptr};
+
+
 obj player;
 obj starfield;
 obj background;
@@ -30,6 +36,26 @@ void loadCharacterData(){
 	
 }
 
+void loadPlayerTextures() {
+    const char* player_damage_image_paths[MAX_DAMAGE_STATES] = {
+        "/rd/vipersm2.png",
+        "/rd/vipersm2-damage-1.png",
+        "/rd/vipersm2-damage-2.png",
+        "/rd/vipersm2-damage-3.png",
+        "/rd/vipersm2-damage-4.png",
+        "/rd/vipersm2-damage-5.png"
+    };
+
+    for (int i = 0; i < MAX_DAMAGE_STATES; i++) {
+        g_player_textures[i] = pvr_mem_malloc(64 * 64 * 2);
+        if (!g_player_textures[i]) {
+            printf("Failed to allocate memory for player damage texture %d\n", i);
+            continue;
+        }
+        png_to_texture(player_damage_image_paths[i], g_player_textures[i], PNG_FULL_ALPHA);
+    }
+}
+
 void loadPlayer(){
 	
 	player.imgX = 64;
@@ -42,15 +68,26 @@ void loadPlayer(){
 	player.hitbox_offset_y = 9;
 	player.hitbox_width = (52-8);
 	player.hitbox_height = (43-9);
+	player.health = 1000;
+	player.damage_state = 0;
 
-    player.texture_pointer = pvr_mem_malloc(64 * 64 * 2);
-    if(!player.texture_pointer){
-		printf("Player image failed to load...");
-	}
-    png_to_texture("/rd/vipersm2.png", player.texture_pointer, PNG_FULL_ALPHA);
+	
+    loadPlayerTextures();
 
-    player.health = 1000;
+    for (int i = 0; i < MAX_DAMAGE_STATES; i++) {
+        player.damage_textures[i] = g_player_textures[i];
+    }
 
+    player.texture_pointer = player.damage_textures[0];
+}
+
+void unloadPlayerTextures() {
+    for (int i = 0; i < MAX_DAMAGE_STATES; i++) {
+        if (g_player_textures[i]) {
+            pvr_mem_free(g_player_textures[i]);
+            g_player_textures[i] = nullptr;
+        }
+    }
 }
 
 void loadChain(){
@@ -74,8 +111,31 @@ void loadChain(){
 	}
 }
 
+void loadEnemyTextures() {
+    const char* damage_image_paths[MAX_DAMAGE_STATES] = {
+        "/rd/raidersm.png",
+        "/rd/raidersm-damage-1.png",
+        "/rd/raidersm-damage-2.png",
+        "/rd/raidersm-damage-3.png",
+        "/rd/raidersm-damage-4.png",
+        "/rd/raidersm-damage-5.png"
+    };
+
+    for (int i = 0; i < MAX_DAMAGE_STATES; i++) {
+        g_enemy_textures[i] = pvr_mem_malloc(64 * 64 * 2);
+        if (!g_enemy_textures[i]) {
+            printf("Failed to allocate memory for enemy damage texture %d\n", i);
+            // Handle error (e.g., reduce texture quality or use fewer damage states)
+            continue;
+        }
+        png_to_texture(damage_image_paths[i], g_enemy_textures[i], PNG_FULL_ALPHA);
+    }
+}
+
 void loadEnemies() {
     std::srand(std::time(nullptr)); // Seed the random number generator
+
+	loadEnemyTextures();
 
     for (int i = 0; i < MAX_NUM_ENEMIES; i++) {
         enemy[i].x = 480 + (rand() % 10000); // Random X start position
@@ -91,22 +151,31 @@ void loadEnemies() {
 		  // Set initial Y position within the screen height
         enemy[i].initialY = 1 + (rand() % (480 - 64)); // Adjust based on screen height and enemy height
         enemy[i].y = enemy[i].initialY; // Set current Y to initial Y
-        
-        // Allocate memory for the texture
-        enemy[i].texture_pointer = pvr_mem_malloc(64 * 64 * 2);
-        if (!enemy[i].texture_pointer) {
-            printf("Chain image failed to load...");
+
+        // Use shared textures
+        for (int j = 0; j < MAX_DAMAGE_STATES; j++) {
+            enemy[i].damage_textures[j] = g_enemy_textures[j];
         }
 
-        png_to_texture("/rd/raidersm.png", enemy[i].texture_pointer, PNG_FULL_ALPHA);
+        enemy[i].texture_pointer = enemy[i].damage_textures[0];  // Set initial texture
+        enemy[i].damage_state = 0;  // Initial damage state
 
-        // Set random values for vertical movement
-        enemy[i].frequency = 0.02f + (rand() % 10) * 0.01f; // Random frequency between 0.02 and 0.12
-        enemy[i].amplitude = 10.0f + (rand() % 30); // Random amplitude between 10 and 40
-        enemy[i].phase = rand() % 360; // Random phase shift in degrees
+        enemy[i].frequency = 0.02f + (rand() % 10) * 0.01f;
+        enemy[i].amplitude = 10.0f + (rand() % 30);
+        enemy[i].phase = rand() % 360;
 
         enemy[i].isalive = 1;
         enemy[i].pctr = 0;
+    }
+}
+
+// Add this function to your loadobj.cpp
+void unloadEnemyTextures() {
+    for (int i = 0; i < MAX_DAMAGE_STATES; i++) {
+        if (g_enemy_textures[i]) {
+            pvr_mem_free(g_enemy_textures[i]);
+            g_enemy_textures[i] = nullptr;
+        }
     }
 }
 
@@ -132,6 +201,27 @@ void loadEnemyChain(){
 }
 
 
+void loadEnemyBattlestarTextures() {
+    const char* damage_image_paths[MAX_DAMAGE_STATES] = {
+        "/rd/battlestar.png",
+        "/rd/battlestar-damage-1.png",
+        "/rd/battlestar-damage-2.png",
+        "/rd/battlestar-damage-3.png",
+        "/rd/battlestar-damage-4.png",
+        "/rd/battlestar-damage-5.png"
+    };
+	
+	for (int i = 0; i < MAX_DAMAGE_STATES; i++) {
+        g_enemybattlestar_textures[i] = pvr_mem_malloc(128 * 128 * 2);
+        if (!g_enemybattlestar_textures[i]) {
+            printf("Failed to allocate memory for player damage texture %d\n", i);
+            continue;
+        }
+        png_to_texture(damage_image_paths[i], g_enemybattlestar_textures[i], PNG_FULL_ALPHA);
+    }
+}
+
+
 void loadEnemyBattlestar(){
 	battlestar.x = 10050;
 	battlestar.y = (480/2) + 17;
@@ -140,14 +230,28 @@ void loadEnemyBattlestar(){
 	battlestar.health = 1000;
 	battlestar.hitbox_offset_x = 8;
 	battlestar.hitbox_offset_y = 9;
-	battlestar.hitbox_width = (52-8);
-	battlestar.hitbox_height = (43-9);
-	battlestar.texture_pointer = pvr_mem_malloc(128 * 128 * 2);
-		if(!battlestar.texture_pointer){
-			printf("battlestar.img failed to load..");
-		}
-	png_to_texture("/rd/battlestar.png", battlestar.texture_pointer, PNG_FULL_ALPHA);
-	battlestar.isalive = 1;
+	battlestar.hitbox_width = (120-8);
+	battlestar.hitbox_height = (120-9);
+	battlestar.damage_state = 0;
+    battlestar.isalive = 1;
+
+	loadEnemyBattlestarTextures();
+
+    for (int i = 0; i < MAX_DAMAGE_STATES; i++) {
+        battlestar.damage_textures[i] = g_enemybattlestar_textures[i];
+    }
+
+    battlestar.texture_pointer = battlestar.damage_textures[0];
+}
+
+// Add this function to your loadobj.cpp
+void unloadEnemyBattlestarTextures() {
+    for (int i = 0; i < MAX_DAMAGE_STATES; i++) {
+        if (g_enemybattlestar_textures[i]) {
+            pvr_mem_free(g_enemybattlestar_textures[i]);
+            g_enemybattlestar_textures[i] = nullptr;
+        }
+    }
 }
 
 void loadBackground(){

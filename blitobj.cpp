@@ -131,6 +131,11 @@ void blitEnemies(float deltaTime) {
             if (enemy[enemy_ctr].x <= 0) {
                 enemy[enemy_ctr].isalive = 0;
             } else {
+                // Update texture based on current damage state
+                int damage_state = (50 - enemy[enemy_ctr].health) / 10;
+                if (damage_state > 5) damage_state = 5;
+                enemy[enemy_ctr].texture_pointer = enemy[enemy_ctr].damage_textures[damage_state];
+
                 blitObj(enemy[enemy_ctr]);
                 
                 // Shoot from this enemy
@@ -141,6 +146,9 @@ void blitEnemies(float deltaTime) {
         } else {
             // Free up memory.. do not blit to screen
             enemy[enemy_ctr].x = 500;
+            // Reset health and damage state for future use
+            enemy[enemy_ctr].health = 50;
+            enemy[enemy_ctr].texture_pointer = enemy[enemy_ctr].damage_textures[0];
         }
     }
 }

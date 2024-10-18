@@ -45,6 +45,11 @@ int main(int argc, char **argv) {
     showMainMenu();
 
     initStorySplash();
+
+    // Load enemy textures before loading character data
+    loadEnemyTextures();
+    loadPlayerTextures();
+    loadEnemyBattlestarTextures();
     loadCharacterData(); // loadobj.cpp
 
     if (!g_audioSystem.initialize("/rd/mrdeath.xm")) {
@@ -106,6 +111,10 @@ int main(int argc, char **argv) {
 
     g_audioSystem.cleanup();
 
+    // Unload enemy textures
+    unloadEnemyTextures();
+    unloadPlayerTextures();
+    unloadEnemyBattlestarTextures();
     return 0;
 }
 

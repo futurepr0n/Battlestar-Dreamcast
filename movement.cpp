@@ -38,6 +38,61 @@ int checkCollision(obj* obj1, obj* obj2) {
         obj1_top < obj2_bottom && obj1_bottom > obj2_top) {
         
         // Collision detected
+        if (obj2 == &player) {
+            // Player hit by enemy bullet
+            if (player.health > 0) {
+                player.health -= 10;
+                
+                // Update player damage state
+                int new_damage_state = (1000 - player.health) / 200;
+                if (new_damage_state > 5) new_damage_state = 5;
+                
+                if (new_damage_state != player.damage_state) {
+                    player.damage_state = new_damage_state;
+                    player.texture_pointer = player.damage_textures[new_damage_state];
+                }
+                
+                if (player.health <= 0) {
+                    player.isalive = 0;
+                }
+            }
+        } else if (obj2 == &battlestar) {
+            // Battlestar hit by player bullet
+            if (battlestar.health > 0) {
+                battlestar.health -= 10;
+                
+                // Update battlestar damage state
+                int new_damage_state = (1000 - battlestar.health) / 200;
+                if (new_damage_state > 5) new_damage_state = 5;
+                
+                if (new_damage_state != battlestar.damage_state) {
+                    battlestar.damage_state = new_damage_state;
+                    battlestar.texture_pointer = battlestar.damage_textures[new_damage_state];
+                }
+                
+                if (battlestar.health <= 0) {
+                    battlestar.isalive = 0;
+                }
+            }
+        } else {
+            // Regular enemy hit by player bullet
+            if (obj2->health > 0) {
+                obj2->health -= 10;
+                
+                // Update enemy damage state
+                int new_damage_state = (50 - obj2->health) / 10;
+                if (new_damage_state > 5) new_damage_state = 5;
+                
+                if (new_damage_state != obj2->damage_state) {
+                    obj2->damage_state = new_damage_state;
+                    obj2->texture_pointer = obj2->damage_textures[new_damage_state];
+                }
+                
+                if (obj2->health <= 0) {
+                    obj2->isalive = 0;
+                }
+            }
+        }
         return 1;
     }
 

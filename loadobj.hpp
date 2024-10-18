@@ -12,9 +12,11 @@
 extern "C" {
 #endif
 
-#define MAX_NUM_BULLETS 10
+#define MAX_NUM_BULLETS 3
 #define MAX_NUM_ENEMY_BULLETS 3
 #define MAX_NUM_ENEMIES 100
+#define MAX_DAMAGE_STATES 6  // 5 damage states + 1 original state
+
 
 //int bullets = 0;
 // int points = 0;
@@ -41,6 +43,8 @@ typedef struct{
 	//int dir;
 	void *img_data;
     pvr_ptr_t texture_pointer;
+	pvr_ptr_t damage_textures[MAX_DAMAGE_STATES];  // Array of texture pointers for different damage states
+    int damage_state;  // Current damage state
 	int isalive;	
 	int pctr;
 }obj;
@@ -81,6 +85,12 @@ extern obj battlestar;
 	void loadBackground();
 	void loadEnemyBattlestar();
 	void loadStarfield();
+	void loadPlayerTextures();
+	void unloadPlayerTextures();
+	void loadEnemyTextures();
+	void unloadEnemyTextures();
+	void loadEnemyBattlestarTextures();
+	void unloadEnemyBattlestarTextures();
 	//void loadStatusBar();
 	//void loadHsBar();
 

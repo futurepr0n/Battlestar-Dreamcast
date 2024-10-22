@@ -5,13 +5,13 @@
 #include <cmath>
 
 // Constants for movement
-const float ENEMY_BASE_SPEED = 2.0f; // Base speed in pixels per frame
-const float ENEMY_AMPLITUDE = 10.0f; // Amplitude for up and down movement
-const float ENEMY_FREQUENCY = 0.05f; // Frequency for up and down movement
+const float ENEMY_BASE_SPEED = 2.0f;
+const float ENEMY_AMPLITUDE = 10.0f;
+const float ENEMY_FREQUENCY = 0.05f;
+const float MAX_X_THRESHOLD = 320.0f;
 
 
 
-int enemybullets = 0;
 
 int nextPowerOf2(int num) {
     int power = 1;
@@ -78,78 +78,3 @@ void blitObj(const obj& object) {
     pvr_prim(&vert, sizeof(vert));
     
 }
-
-
-// void shootEnemyChain(int z){
-// 	if(enemybullets < MAX_NUM_ENEMY_BULLETS && enemychain[enemybullets].isalive == 0){
-// 		enemychain[enemybullets].isalive = 1;
-// 		enemychain[enemybullets].x = enemy[z].x;
-// 		enemychain[enemybullets].y = enemy[z].y + (enemy[z].imgY / 2);
-// 	} 
-	
-// 	enemybullets++;
-// 	if(enemybullets > MAX_NUM_ENEMY_BULLETS){
-// 		enemybullets = 0;
-// 	}
-    
-// }
-
-void shootEnemyChain(int z) {
-    // Check if the enemy is visible on screen
-    if (enemy[z].x >= 0 && enemy[z].x < 640 &&
-        enemy[z].y >= 0 && enemy[z].y < 480) {
-        
-        if (enemybullets < MAX_NUM_ENEMY_BULLETS && enemychain[enemybullets].isalive == 0) {
-            enemychain[enemybullets].isalive = 1;
-            enemychain[enemybullets].x = enemy[z].x;
-            enemychain[enemybullets].y = enemy[z].y + (enemy[z].imgY / 2);
-            
-            enemybullets++;
-            if (enemybullets >= MAX_NUM_ENEMY_BULLETS) {
-                enemybullets = 0;
-            }
-        }
-    }
-}
-
-void blitEnemies(float deltaTime) {
-    for (int enemy_ctr = 0; enemy_ctr < MAX_NUM_ENEMIES; enemy_ctr++) {
-        if (enemy[enemy_ctr].isalive) {
-            // Update the enemy's horizontal position
-            float speed = ENEMY_BASE_SPEED + ((rand() % 10) * 0.1f);
-            enemy[enemy_ctr].x -= speed * deltaTime;
-
-            // Vertical movement
-            const float maxFluctuation = 50.0f;
-            float fluctuation = maxFluctuation * sin(enemy[enemy_ctr].frequency * enemy[enemy_ctr].x + enemy[enemy_ctr].phase);
-            enemy[enemy_ctr].y = enemy[enemy_ctr].initialY + fluctuation;
-
-            // Clamp Y position
-            if (enemy[enemy_ctr].y < 0) enemy[enemy_ctr].y = 0;
-            if (enemy[enemy_ctr].y > 480 - 64) enemy[enemy_ctr].y = 480 - 64;
-
-            if (enemy[enemy_ctr].x <= 0) {
-                enemy[enemy_ctr].isalive = 0;
-            } else {
-                // Update texture based on current damage state
-                int damage_state = (50 - enemy[enemy_ctr].health) / 10;
-                if (damage_state > 5) damage_state = 5;
-                enemy[enemy_ctr].texture_pointer = enemy[enemy_ctr].damage_textures[damage_state];
-
-                blitObj(enemy[enemy_ctr]);
-                
-                // Shoot from this enemy
-                if (rand() % 100 < 5) { // 5% chance to shoot per frame
-                    shootEnemyChain(enemy_ctr);
-                }
-            }
-        } else {
-            // Free up memory.. do not blit to screen
-            enemy[enemy_ctr].x = 500;
-            // Reset health and damage state for future use
-            enemy[enemy_ctr].health = 50;
-            enemy[enemy_ctr].texture_pointer = enemy[enemy_ctr].damage_textures[0];
-        }
-    }
-}
-

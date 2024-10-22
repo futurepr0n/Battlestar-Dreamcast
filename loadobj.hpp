@@ -15,6 +15,7 @@ extern "C" {
 #define MAX_NUM_BULLETS 3
 #define MAX_NUM_ENEMY_BULLETS 3
 #define MAX_NUM_ENEMIES 100
+#define ENEMIES_PER_WAVE 5
 #define MAX_DAMAGE_STATES 6  // 5 damage states + 1 original state
 
 
@@ -25,8 +26,10 @@ extern "C" {
 // char highScore[5];
 
 typedef struct{
-	int x;
-	int y;
+	float x;
+	float y;
+	float prev_x;  // Add this line
+    float prev_y;  // Add this line
 	float imgX;
 	float imgY;
 	int hitbox_offset_x;
@@ -40,7 +43,7 @@ typedef struct{
 	float initialX;
 	float initialY;
 	int deathPoints;  // New field for score points
-
+	int wave_number;  // New field to track which wave the enemy belongs to
 	//int dir;
 	void *img_data;
     pvr_ptr_t texture_pointer;
@@ -61,6 +64,9 @@ extern obj starfield;
 extern obj battlestar;
 
 
+extern int current_wave;
+extern int enemies_defeated;
+extern bool wave_in_progress;
 
 //obj background;
 //obj starfield;
@@ -78,6 +84,10 @@ extern obj battlestar;
 //    
 
 //private functions
+	void initializeWave();
+	bool isWaveDefeated();
+	void updateEnemyWaves();
+
     void loadPlayer();
     void loadEnemies();
     void loadChain();

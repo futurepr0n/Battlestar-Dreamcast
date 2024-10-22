@@ -109,6 +109,8 @@ int main(int argc, char **argv) {
 
         }
         g_audioSystem.update();
+        // Update game state
+        updateEnemyWaves();
 
         timer_spin_sleep(10);
         

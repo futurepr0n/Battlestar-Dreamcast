@@ -278,10 +278,11 @@ void draw_scene(void) {
 
     pvr_list_begin(PVR_LIST_TR_POLY);
     draw_scrolling_background(x_offset);
-    moveStuff();
+    
     float deltaTime = getDeltaTime();
+    moveStuff();
     draw_ship(player);
-    blitEnemies(deltaTime);
+    //blitEnemies(deltaTime);
     blitObj(battlestar);
     draw_player_info();  // Add this line to display player info
     pvr_list_finish();

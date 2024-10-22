@@ -15,6 +15,12 @@ pvr_ptr_t g_player_textures[MAX_DAMAGE_STATES] = {nullptr};
 pvr_ptr_t g_enemybattlestar_textures[MAX_DAMAGE_STATES] = {nullptr};
 
 
+// Initialize new variables
+int current_wave = 0;
+int enemies_defeated = 0;
+bool wave_in_progress = false;
+
+
 obj player;
 obj starfield;
 obj background;
@@ -34,6 +40,47 @@ void loadCharacterData(){
 	//loadHsBar();
 	//loadStatusBar();
 	
+}
+
+
+void initializeWave() {
+    if (current_wave * ENEMIES_PER_WAVE < MAX_NUM_ENEMIES) {
+        for (int i = 0; i < ENEMIES_PER_WAVE; i++) {
+            int index = current_wave * ENEMIES_PER_WAVE + i;
+            enemy[index].isalive = 1;
+            enemy[index].x = 640 + i * 100; // Start off-screen
+            enemy[index].health = 50; // Reset health
+            enemy[index].damage_state = 0;
+            enemy[index].texture_pointer = enemy[index].damage_textures[0];
+        }
+        wave_in_progress = true;
+    } else if (!battlestar.isalive) {
+        // All waves defeated, spawn battlestar
+        battlestar.isalive = 1;
+        battlestar.x = 640; // Start off-screen
+        battlestar.health = 1000; // Reset health
+        battlestar.damage_state = 0;
+        battlestar.texture_pointer = battlestar.damage_textures[0];
+    }
+}
+
+bool isWaveDefeated() {
+    for (int i = current_wave * ENEMIES_PER_WAVE; i < (current_wave + 1) * ENEMIES_PER_WAVE; i++) {
+        if (enemy[i].isalive) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void updateEnemyWaves() {
+    if (!wave_in_progress) {
+        initializeWave();
+    } else if (isWaveDefeated()) {
+        current_wave++;
+        wave_in_progress = false;
+        enemies_defeated += ENEMIES_PER_WAVE;
+    }
 }
 
 void loadPlayerTextures() {
@@ -90,25 +137,26 @@ void unloadPlayerTextures() {
     }
 }
 
-void loadChain(){
-	int i;	
-	for(i = 0; i < MAX_NUM_BULLETS; i++){
-		chain[i].x = 0;
-		chain[i].y = 0;
-		chain[i].imgX = 8;
-		chain[i].imgY = 8;
-		chain[i].hitbox_offset_x = 0;
-		chain[i].hitbox_offset_y = 3;
-		chain[i].hitbox_width = (8-0);
-		chain[i].hitbox_height = (8-5);
-		chain[i].texture_pointer = pvr_mem_malloc(8 * 8 * 2);
-    	if(!chain[i].texture_pointer){
-			printf("chain image failed to load...");
-		}
-    	png_to_texture("/rd/chain.png", chain[i].texture_pointer, PNG_FULL_ALPHA);
-		chain[i].isalive = 0;
-		chain[i].pctr = 0;
-	}
+
+void loadChain() {
+    for(int i = 0; i < MAX_NUM_BULLETS; i++) {
+        chain[i].x = 0;
+        chain[i].y = 0;
+        chain[i].imgX = 8;
+        chain[i].imgY = 8;
+        // Center the hitbox
+        chain[i].hitbox_offset_x = 0;
+        chain[i].hitbox_offset_y = 0;
+        chain[i].hitbox_width = 8;
+        chain[i].hitbox_height = 8;
+        chain[i].texture_pointer = pvr_mem_malloc(8 * 8 * 2);
+        if(!chain[i].texture_pointer) {
+            printf("chain image failed to load...");
+        }
+        png_to_texture("/rd/chain.png", chain[i].texture_pointer, PNG_FULL_ALPHA);
+        chain[i].isalive = 0;
+        chain[i].pctr = 0;
+    }
 }
 
 void loadEnemyTextures() {
@@ -133,40 +181,34 @@ void loadEnemyTextures() {
 }
 
 void loadEnemies() {
-    std::srand(std::time(nullptr)); // Seed the random number generator
-
-	loadEnemyTextures();
+    std::srand(std::time(nullptr));
+    loadEnemyTextures();
 
     for (int i = 0; i < MAX_NUM_ENEMIES; i++) {
-        enemy[i].x = 480 + (rand() % 10000); // Random X start position
-        enemy[i].y = 1 + (rand() % (480 - 64)); // Random Y position within screen height
+        enemy[i].x = 640 + (i % ENEMIES_PER_WAVE) * 100;
+        enemy[i].y = 100 + (i % ENEMIES_PER_WAVE) * 60;
         enemy[i].imgX = 64;
         enemy[i].imgY = 64;
         enemy[i].health = 50;
-		enemy[i].hitbox_offset_x = 11;
-		enemy[i].hitbox_offset_y = 22;
-		enemy[i].hitbox_width = (52-11);
-		enemy[i].hitbox_height = (41-22);
-		enemy[i].deathPoints = 10;
-
-		  // Set initial Y position within the screen height
-        enemy[i].initialY = 1 + (rand() % (480 - 64)); // Adjust based on screen height and enemy height
-        enemy[i].y = enemy[i].initialY; // Set current Y to initial Y
-
-        // Use shared textures
-        for (int j = 0; j < MAX_DAMAGE_STATES; j++) {
-            enemy[i].damage_textures[j] = g_enemy_textures[j];
-        }
-
-        enemy[i].texture_pointer = enemy[i].damage_textures[0];  // Set initial texture
-        enemy[i].damage_state = 0;  // Initial damage state
-
+        // Center the hitbox
+        enemy[i].hitbox_offset_x = 16;  // (64 - 32) / 2
+        enemy[i].hitbox_offset_y = 16;  // (64 - 32) / 2
+        enemy[i].hitbox_width = 32;     // Adjust based on actual sprite
+        enemy[i].hitbox_height = 32;    // Adjust based on actual sprite
+        enemy[i].deathPoints = 10;
+        enemy[i].initialY = enemy[i].y;
+        enemy[i].wave_number = i / ENEMIES_PER_WAVE;
         enemy[i].frequency = 0.02f + (rand() % 10) * 0.01f;
         enemy[i].amplitude = 10.0f + (rand() % 30);
         enemy[i].phase = rand() % 360;
-
-        enemy[i].isalive = 1;
-        enemy[i].pctr = 0;
+        enemy[i].isalive = 0;
+        
+        // Setup textures
+        for (int j = 0; j < MAX_DAMAGE_STATES; j++) {
+            enemy[i].damage_textures[j] = g_enemy_textures[j];
+        }
+        enemy[i].texture_pointer = enemy[i].damage_textures[0];
+        enemy[i].damage_state = 0;
     }
 }
 

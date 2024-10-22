@@ -11,8 +11,7 @@ extern "C" {
 //private functions
     void blitObj(const obj& object);
     //void blitBg(obj object);
-    void blitEnemies(float deltaTime);
-    void shootEnemyChain(int z);
+    //void shootEnemyChain(int z);
 
 #ifdef __cplusplus
 }

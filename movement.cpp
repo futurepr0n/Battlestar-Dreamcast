@@ -20,23 +20,23 @@ int enemybullets = 0;
 inline bool checkSimpleCollision(obj* obj1, obj* obj2) {
     if (!obj1->isalive || !obj2->isalive) return false;
 
-    // Get the centers of both objects
-    float obj1_center_x = obj1->x + obj1->imgX / 2;
-    float obj1_center_y = obj1->y + obj1->imgY / 2;
-    float obj2_center_x = obj2->x + obj2->imgX / 2;
-    float obj2_center_y = obj2->y + obj2->imgY / 2;
+    // Calculate centers of objects using their actual positions and dimensions
+    float obj1_center_x = obj1->x;  // Position is already center-based
+    float obj1_center_y = obj1->y;
+    float obj2_center_x = obj2->x;
+    float obj2_center_y = obj2->y;
+
+    // Calculate collision boundaries using half-dimensions
+    float obj1_half_width = obj1->imgX / 2;
+    float obj1_half_height = obj1->imgY / 2;
+    float obj2_half_width = obj2->imgX / 2;
+    float obj2_half_height = obj2->imgY / 2;
 
     // Calculate distances between centers
     float dx = fabs(obj1_center_x - obj2_center_x);
     float dy = fabs(obj1_center_y - obj2_center_y);
 
-    // Get half-widths and half-heights
-    float obj1_half_width = obj1->hitbox_width / 2;
-    float obj1_half_height = obj1->hitbox_height / 2;
-    float obj2_half_width = obj2->hitbox_width / 2;
-    float obj2_half_height = obj2->hitbox_height / 2;
-
-    // Check for overlap
+    // Check for overlap using actual sprite dimensions
     return dx < (obj1_half_width + obj2_half_width) &&
            dy < (obj1_half_height + obj2_half_height);
 }

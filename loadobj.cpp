@@ -230,9 +230,9 @@ void loadEnemyChain(){
 		enemychain[i].imgX = 8;
 		enemychain[i].imgY = 8;
 		enemychain[i].hitbox_offset_x = 0;
-		enemychain[i].hitbox_offset_y = 3;
-		enemychain[i].hitbox_width = (8-0);
-		enemychain[i].hitbox_height = (8-5);
+		enemychain[i].hitbox_offset_y = 0;
+		enemychain[i].hitbox_width = 8;
+		enemychain[i].hitbox_height = 8;
 		enemychain[i].texture_pointer = pvr_mem_malloc(8 * 8 * 2);
 		if(!enemychain[i].texture_pointer){
 			printf("enemychain image failed to load...");

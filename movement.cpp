@@ -186,9 +186,12 @@ void moveStuff() {
 void shootChain() {
     if(bullets < MAX_NUM_BULLETS && chain[bullets].isalive == 0) {
         chain[bullets].isalive = 1;
-        // Center the bullet on the player's position
-        chain[bullets].x = player.x;
-        chain[bullets].y = player.y + (player.imgY / 2) - (chain[bullets].imgY / 2);
+        // Position bullet from the center of the player, subtracting half the bullet size
+        chain[bullets].x = player.x - (chain[bullets].imgX / 2);
+        chain[bullets].y = player.y - (chain[bullets].imgY / 2);
+        
+        // Add fine adjustment to make bullet come from middle of player
+        chain[bullets].x += player.imgX / 2;
     }
     
     bullets++;
@@ -200,9 +203,12 @@ void shootChain() {
 void shootEnemyChain(int enemyIndex) {
     if (enemybullets < MAX_NUM_ENEMY_BULLETS && enemychain[enemybullets].isalive == 0) {
         enemychain[enemybullets].isalive = 1;
-        // Center the bullet on the enemy's position
-        enemychain[enemybullets].x = enemy[enemyIndex].x;
-        enemychain[enemybullets].y = enemy[enemyIndex].y + (enemy[enemyIndex].imgY / 2) - (enemychain[enemybullets].imgY / 2);
+        // Position bullet from the center of the enemy, subtracting half the bullet size
+        enemychain[enemybullets].x = enemy[enemyIndex].x - (enemychain[enemybullets].imgX / 2);
+        enemychain[enemybullets].y = enemy[enemyIndex].y - (enemychain[enemybullets].imgY / 2);
+        
+        // Add fine adjustment to make bullet come from middle of enemy
+        enemychain[enemybullets].x += enemy[enemyIndex].imgX / 2;
     }
     
     enemybullets++;

@@ -19,7 +19,7 @@ const float MAX_X_THRESHOLD = 320.0f;
 // Game mechanics
 const int MAX_NUM_BULLETS = 3;
 const int MAX_NUM_ENEMY_BULLETS = 1;
-const int MAX_NUM_ENEMIES = 100;
+const int MAX_NUM_ENEMIES = 50;
 const int MAX_DAMAGE_STATES = 6;
 const int ENEMIES_PER_WAVE = 5;
 

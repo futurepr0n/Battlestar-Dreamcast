@@ -5,15 +5,15 @@
 #include "loadobj.hpp"
 
 #ifdef __cplusplus
-extern "C" {
+//extern "C" {
 #endif
 
 //private functions
-    void blitObj(const obj& object);
+    void blitObj(const obj& object, float rotation_degrees = 0.0f);
     //void blitBg(obj object);
     //void shootEnemyChain(int z);
 
 #ifdef __cplusplus
-}
+//}
 #endif
 #endif

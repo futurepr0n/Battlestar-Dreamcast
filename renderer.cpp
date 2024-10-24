@@ -283,7 +283,7 @@ void draw_scene(void) {
     moveStuff();
     draw_ship(player);
     //blitEnemies(deltaTime);
-    blitObj(battlestar);
+    //blitObj(battlestar);
     draw_player_info();  // Add this line to display player info
     pvr_list_finish();
     pvr_scene_finish();

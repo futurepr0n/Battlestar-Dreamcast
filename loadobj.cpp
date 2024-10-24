@@ -20,6 +20,9 @@ pvr_ptr_t g_enemybattlestar_textures[MAX_DAMAGE_STATES] = {nullptr};
 int current_wave = 0;
 int enemies_defeated = 0;
 bool wave_in_progress = false;
+bool gameCompleted = false;
+
+const int TOTAL_WAVES = MAX_NUM_ENEMIES / ENEMIES_PER_WAVE;  // 50/5 = 10 waves
 
 
 obj player;
@@ -43,30 +46,75 @@ void loadCharacterData(){
 	
 }
 
-
 void initializeWave() {
-    if (current_wave * ENEMIES_PER_WAVE < MAX_NUM_ENEMIES) {
+    printf("Current wave: %d, Total waves: %d\n", current_wave, TOTAL_WAVES);
+    
+    // Only spawn regular enemies if we haven't gone through all waves
+    if (current_wave < TOTAL_WAVES) {
+        printf("Initializing wave %d of %d\n", current_wave + 1, TOTAL_WAVES);
         for (int i = 0; i < ENEMIES_PER_WAVE; i++) {
             int index = current_wave * ENEMIES_PER_WAVE + i;
+            if (index >= MAX_NUM_ENEMIES) {
+                printf("Warning: Trying to spawn enemy beyond MAX_NUM_ENEMIES\n");
+                continue;
+            }
             enemy[index].isalive = 1;
-            enemy[index].x = 640 + i * 100; // Start off-screen
-            enemy[index].health = 50; // Reset health
+            enemy[index].x = 640 + i * 100;
+            enemy[index].health = 50;
             enemy[index].damage_state = 0;
             enemy[index].texture_pointer = enemy[index].damage_textures[0];
+            enemy[index].initialY = 100 + i * 60;
+            enemy[index].y = enemy[index].initialY;
+            printf("Spawned enemy %d at position (%f, %f)\n", index, enemy[index].x, enemy[index].y);
         }
         wave_in_progress = true;
-    } else if (!battlestar.isalive) {
-        // All waves defeated, spawn battlestar
-        battlestar.isalive = 1;
-        battlestar.x = 640; // Start off-screen
-        battlestar.health = 1000; // Reset health
+    }
+    // Only try to spawn battlestar after all waves are truly complete
+    else if (current_wave == TOTAL_WAVES && !battlestar.isalive && !gameCompleted) {
+        printf("Attempting to spawn Battlestar boss...\n");
+        
+        // Verify textures are valid
+        bool texturesValid = true;
+        for (int i = 0; i < MAX_DAMAGE_STATES; i++) {
+            if (!battlestar.damage_textures[i]) {
+                texturesValid = false;
+                printf("Error: Battlestar texture %d is invalid\n", i);
+                break;
+            }
+        }
+
+        if (!texturesValid) {
+            printf("Reloading battlestar textures...\n");
+            loadEnemyBattlestarTextures();
+            // Reassign textures
+            for (int i = 0; i < MAX_DAMAGE_STATES; i++) {
+                battlestar.damage_textures[i] = g_enemybattlestar_textures[i];
+            }
+        }
+
+        battlestar.x = 640;
+        battlestar.y = (480/2) - 64;
+        battlestar.health = 1000;
         battlestar.damage_state = 0;
         battlestar.texture_pointer = battlestar.damage_textures[0];
+        battlestar.isalive = 1;
+        
+        wave_in_progress = true;
+        printf("Battlestar spawned successfully at position (%f, %f)\n", 
+               battlestar.x, battlestar.y);
     }
 }
 
+
 bool isWaveDefeated() {
-    for (int i = current_wave * ENEMIES_PER_WAVE; i < (current_wave + 1) * ENEMIES_PER_WAVE; i++) {
+    if (current_wave == TOTAL_WAVES) {
+        return !battlestar.isalive;
+    }
+    
+    int waveStartIndex = current_wave * ENEMIES_PER_WAVE;
+    int waveEndIndex = std::min((current_wave + 1) * ENEMIES_PER_WAVE, MAX_NUM_ENEMIES);
+    
+    for (int i = waveStartIndex; i < waveEndIndex; i++) {
         if (enemy[i].isalive) {
             return false;
         }
@@ -75,12 +123,25 @@ bool isWaveDefeated() {
 }
 
 void updateEnemyWaves() {
+    if (gameCompleted) {
+        return;
+    }
+
     if (!wave_in_progress) {
         initializeWave();
-    } else if (isWaveDefeated()) {
-        current_wave++;
-        wave_in_progress = false;
-        enemies_defeated += ENEMIES_PER_WAVE;
+    }
+    else if (isWaveDefeated()) {
+        if (current_wave < TOTAL_WAVES) {
+            printf("Wave %d completed! Enemies defeated: %d\n", 
+                   current_wave + 1, enemies_defeated);
+            current_wave++;
+            wave_in_progress = false;
+            enemies_defeated += ENEMIES_PER_WAVE;
+        }
+        else if (current_wave == TOTAL_WAVES && !battlestar.isalive) {
+            printf("Game completed! All waves and battlestar defeated!\n");
+            gameCompleted = true;
+        }
     }
 }
 
@@ -269,28 +330,42 @@ void loadEnemyBattlestarTextures() {
 }
 
 
-void loadEnemyBattlestar(){
-	battlestar.x = 10050;
-	battlestar.y = (480/2) + 17;
-	battlestar.imgX = 128;
-	battlestar.imgY = 128;
-	battlestar.health = 1000;
-	battlestar.hitbox_offset_x = 8;
-	battlestar.hitbox_offset_y = 9;
-	battlestar.hitbox_width = (120-8);
-	battlestar.hitbox_height = (120-9);
-	battlestar.damage_state = 0;
-    battlestar.isalive = 1;
-	battlestar.deathPoints = 100;
+void loadEnemyBattlestar() {
+    printf("Initializing battlestar...\n");
+    
+    battlestar.x = 640;
+    battlestar.y = (480/2) - 64;
+    battlestar.imgX = 128;
+    battlestar.imgY = 128;
+    battlestar.health = 1000;
+    battlestar.hitbox_offset_x = 8;
+    battlestar.hitbox_offset_y = 9;
+    battlestar.hitbox_width = (120-8);
+    battlestar.hitbox_height = (120-9);
+    battlestar.damage_state = 0;
+    battlestar.isalive = 0;
+    battlestar.deathPoints = 100;
 
-	loadEnemyBattlestarTextures();
+    loadEnemyBattlestarTextures();
 
+    bool texturesLoaded = true;
     for (int i = 0; i < MAX_DAMAGE_STATES; i++) {
+        if (!g_enemybattlestar_textures[i]) {
+            printf("Failed to load battlestar texture %d\n", i);
+            texturesLoaded = false;
+            break;
+        }
         battlestar.damage_textures[i] = g_enemybattlestar_textures[i];
     }
 
-    battlestar.texture_pointer = battlestar.damage_textures[0];
+    if (texturesLoaded) {
+        battlestar.texture_pointer = battlestar.damage_textures[0];
+        printf("Battlestar initialized successfully\n");
+    } else {
+        printf("Failed to initialize battlestar textures\n");
+    }
 }
+
 
 // Add this function to your loadobj.cpp
 void unloadEnemyBattlestarTextures() {

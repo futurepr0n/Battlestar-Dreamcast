@@ -11,6 +11,8 @@
 
 int bullets = 0;
 int enemybullets = 0;
+const int TOTAL_WAVES = MAX_NUM_ENEMIES / ENEMIES_PER_WAVE;
+
 
 inline bool checkSimpleCollision(obj* obj1, obj* obj2) {
     if (!obj1->isalive || !obj2->isalive) return false;
@@ -36,41 +38,60 @@ inline bool checkSimpleCollision(obj* obj1, obj* obj2) {
            dy < (obj1_half_height + obj2_half_height);
 }
 
-inline void handleCollisionDamage(obj* target) {
+void handleCollisionDamage(obj* target) {
+    if (!target->isalive) return;
+
     if (target == &player) {
         if (player.health > 0) {
             player.health -= 10;
             int new_damage_state = (1000 - player.health) / 200;
-            if (new_damage_state > 5) new_damage_state = 5;
+            new_damage_state = std::min(new_damage_state, MAX_DAMAGE_STATES - 1);
+            
             if (new_damage_state != player.damage_state) {
                 player.damage_state = new_damage_state;
-                player.texture_pointer = player.damage_textures[new_damage_state];
+                if (player.damage_textures[new_damage_state]) {
+                    player.texture_pointer = player.damage_textures[new_damage_state];
+                }
             }
-            if (player.health <= 0) player.isalive = 0;
+            
+            if (player.health <= 0) {
+                player.isalive = 0;
+            }
         }
-    } else if (target == &battlestar) {
+    } 
+    else if (target == &battlestar && current_wave == TOTAL_WAVES) {
         if (battlestar.health > 0) {
             battlestar.health -= 10;
             int new_damage_state = (1000 - battlestar.health) / 200;
-            if (new_damage_state > 5) new_damage_state = 5;
+            new_damage_state = std::min(new_damage_state, MAX_DAMAGE_STATES - 1);
+            
             if (new_damage_state != battlestar.damage_state) {
                 battlestar.damage_state = new_damage_state;
-                battlestar.texture_pointer = battlestar.damage_textures[new_damage_state];
+                if (battlestar.damage_textures[new_damage_state]) {
+                    battlestar.texture_pointer = battlestar.damage_textures[new_damage_state];
+                }
             }
+            
             if (battlestar.health <= 0) {
                 battlestar.isalive = 0;
                 GameState::getInstance().addScore(battlestar.deathPoints);
             }
         }
-    } else {
+    } 
+    else {
+        // Regular enemies
         if (target->health > 0) {
             target->health -= 10;
             int new_damage_state = (50 - target->health) / 10;
-            if (new_damage_state > 5) new_damage_state = 5;
+            new_damage_state = std::min(new_damage_state, MAX_DAMAGE_STATES - 1);
+            
             if (new_damage_state != target->damage_state) {
                 target->damage_state = new_damage_state;
-                target->texture_pointer = target->damage_textures[new_damage_state];
+                if (target->damage_textures[new_damage_state]) {
+                    target->texture_pointer = target->damage_textures[new_damage_state];
+                }
             }
+            
             if (target->health <= 0) {
                 target->isalive = 0;
                 GameState::getInstance().addScore(target->deathPoints);
@@ -96,15 +117,19 @@ void moveStuff() {
 
         bool collision = false;
         // Check collisions with active enemies in current wave
-        for (int e = current_wave * ENEMIES_PER_WAVE; 
-             e < (current_wave + 1) * ENEMIES_PER_WAVE && !collision; e++) {
-            if (enemy[e].isalive && checkSimpleCollision(&chain[p], &enemy[e])) {
-                handleCollisionDamage(&enemy[e]);
-                collision = true;
+        if (current_wave < TOTAL_WAVES) {
+            for (int e = current_wave * ENEMIES_PER_WAVE; 
+                 e < (current_wave + 1) * ENEMIES_PER_WAVE && !collision; e++) {
+                if (enemy[e].isalive && checkSimpleCollision(&chain[p], &enemy[e])) {
+                    handleCollisionDamage(&enemy[e]);
+                    collision = true;
+                }
             }
         }
 
-        if (!collision && battlestar.isalive && checkSimpleCollision(&chain[p], &battlestar)) {
+        // Check battlestar collision only when it's the active boss
+        if (!collision && current_wave == TOTAL_WAVES && battlestar.isalive && 
+            checkSimpleCollision(&chain[p], &battlestar)) {
             handleCollisionDamage(&battlestar);
             collision = true;
         }
@@ -116,36 +141,41 @@ void moveStuff() {
         }
     }
 
-    // Move enemies smoothly
-    for (int enemy_ctr = current_wave * ENEMIES_PER_WAVE; enemy_ctr < (current_wave + 1) * ENEMIES_PER_WAVE; enemy_ctr++) {
-        if (enemy[enemy_ctr].isalive) {
-            // Update the enemy's horizontal position
-            float speed = ENEMY_BASE_SPEED + ((rand() % 10) * 0.1f);
-            enemy[enemy_ctr].x -= speed;
+    // Move enemies only if we're not in battlestar phase
+    if (current_wave < TOTAL_WAVES) {
+        for (int enemy_ctr = current_wave * ENEMIES_PER_WAVE; 
+             enemy_ctr < (current_wave + 1) * ENEMIES_PER_WAVE; enemy_ctr++) {
+            if (enemy[enemy_ctr].isalive) {
+                // Update the enemy's horizontal position
+                float speed = ENEMY_BASE_SPEED + ((rand() % 10) * 0.1f);
+                enemy[enemy_ctr].x -= speed;
 
-            // Stop at the max X threshold
-            if (enemy[enemy_ctr].x < MAX_X_THRESHOLD) {
-                enemy[enemy_ctr].x = MAX_X_THRESHOLD;
-            }
+                // Stop at the max X threshold
+                if (enemy[enemy_ctr].x < MAX_X_THRESHOLD) {
+                    enemy[enemy_ctr].x = MAX_X_THRESHOLD;
+                }
 
-            // Vertical movement
-            float fluctuation = ENEMY_AMPLITUDE * sin(ENEMY_FREQUENCY * enemy[enemy_ctr].x + enemy[enemy_ctr].phase);
-            enemy[enemy_ctr].y = enemy[enemy_ctr].initialY + fluctuation;
+                // Vertical movement
+                float fluctuation = ENEMY_AMPLITUDE * sin(ENEMY_FREQUENCY * enemy[enemy_ctr].x + enemy[enemy_ctr].phase);
+                enemy[enemy_ctr].y = enemy[enemy_ctr].initialY + fluctuation;
 
-            // Clamp Y position
-            if (enemy[enemy_ctr].y < 0) enemy[enemy_ctr].y = 0;
-            if (enemy[enemy_ctr].y > 480 - 64) enemy[enemy_ctr].y = 480 - 64;
+                // Clamp Y position
+                if (enemy[enemy_ctr].y < 0) enemy[enemy_ctr].y = 0;
+                if (enemy[enemy_ctr].y > 480 - 64) enemy[enemy_ctr].y = 480 - 64;
 
-            // Update texture based on current damage state
-            int damage_state = (50 - enemy[enemy_ctr].health) / 10;
-            if (damage_state > 5) damage_state = 5;
-            enemy[enemy_ctr].texture_pointer = enemy[enemy_ctr].damage_textures[damage_state];
+                // Update texture based on current damage state
+                if (enemy[enemy_ctr].damage_state >= 0 && 
+                    enemy[enemy_ctr].damage_state < MAX_DAMAGE_STATES) {
+                    enemy[enemy_ctr].texture_pointer = 
+                        enemy[enemy_ctr].damage_textures[enemy[enemy_ctr].damage_state];
+                }
 
-            blitObj(enemy[enemy_ctr]);
-            
-            // Shoot from this enemy
-            if (rand() % 100 < 5) { // 5% chance to shoot per frame
-                shootEnemyChain(enemy_ctr);
+                blitObj(enemy[enemy_ctr]);
+                
+                // Shoot from this enemy
+                if (rand() % 100 < 5) { // 5% chance to shoot per frame
+                    shootEnemyChain(enemy_ctr);
+                }
             }
         }
     }
@@ -161,7 +191,7 @@ void moveStuff() {
             continue;
         }
 
-        if (checkSimpleCollision(&enemychain[p], &player)) {
+        if (player.isalive && checkSimpleCollision(&enemychain[p], &player)) {
             handleCollisionDamage(&player);
             enemychain[p].isalive = 0;
         } else {
@@ -169,12 +199,29 @@ void moveStuff() {
         }
     }
 
-    // Move battlestar
-    if (battlestar.isalive) {
+    // Move battlestar only when it's the active boss
+    if (current_wave == TOTAL_WAVES && battlestar.isalive) {
+        // Move towards threshold position
         if (battlestar.x > MAX_X_THRESHOLD) {
             battlestar.x -= 2.0f;
         }
-        blitObj(battlestar);
+
+        // Ensure battlestar texture is valid before rendering
+        if (battlestar.texture_pointer && 
+            battlestar.damage_state >= 0 && 
+            battlestar.damage_state < MAX_DAMAGE_STATES) {
+            
+            battlestar.texture_pointer = 
+                battlestar.damage_textures[battlestar.damage_state];
+            blitObj(battlestar);
+
+            // Battlestar shooting logic
+            if (rand() % 100 < 2) { // 2% chance to shoot per frame
+                shootEnemyChain(-1); // Special value for battlestar
+            }
+        } else {
+            printf("Warning: Invalid battlestar texture state detected\n");
+        }
     }
 }
 

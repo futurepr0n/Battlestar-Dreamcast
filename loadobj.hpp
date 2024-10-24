@@ -63,6 +63,8 @@ extern obj battlestar;
 extern int current_wave;
 extern int enemies_defeated;
 extern bool wave_in_progress;
+extern bool gameCompleted;  // Add this to track game state
+
 
 //obj background;
 //obj starfield;

@@ -7,16 +7,10 @@
 #define _LOADOBJ_HPP_
 
 #include <kos.h>
-
+#include "game_constants.hpp"
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#define MAX_NUM_BULLETS 3
-#define MAX_NUM_ENEMY_BULLETS 3
-#define MAX_NUM_ENEMIES 100
-#define ENEMIES_PER_WAVE 5
-#define MAX_DAMAGE_STATES 6  // 5 damage states + 1 original state
 
 
 //int bullets = 0;
@@ -44,6 +38,8 @@ typedef struct{
 	float initialY;
 	int deathPoints;  // New field for score points
 	int wave_number;  // New field to track which wave the enemy belongs to
+	float speed_multiplier;  // For power-ups and speed modifications
+    float current_speed;
 	//int dir;
 	void *img_data;
     pvr_ptr_t texture_pointer;

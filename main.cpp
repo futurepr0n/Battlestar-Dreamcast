@@ -22,9 +22,12 @@
 #include "menu_system.hpp"
 #include "name_selection.hpp" 
 #include "game_state.hpp"
+#include "game_constants.hpp"
 
 #include <cmath>
 #include <chrono>
+
+
 
 int mybullets = 0;
 
@@ -63,51 +66,79 @@ int main(int argc, char **argv) {
     }
 
     while(1) {
+    draw_scene();
+    cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
 
-        draw_scene();
-        /* Check key status */
-        cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
+    if(cont) {
+        state = (cont_state_t *)maple_dev_status(cont);
 
-        if(cont) {
-            state = (cont_state_t *)maple_dev_status(cont);
+        if(state) {
+            bool moving_diagonal = false;
+            float dx = 0.0f;
+            float dy = 0.0f;
+            float current_speed = BASE_PLAYER_SPEED * player.speed_multiplier;
 
-            if(state && state->buttons & CONT_START)
-                break;
-            
-            if(state && state->buttons & CONT_DPAD_LEFT)
-                player.x--;
-            
-            if(state && state->buttons & CONT_DPAD_RIGHT)
-                player.x++;
+            // Handle joystick input with deadzone and normalized movement
+            if (abs(state->joyx) > 10 || abs(state->joyy) > 10) {
+                // Convert joystick values to -1.0 to 1.0 range
+                float joy_x = state->joyx / 128.0f;
+                float joy_y = state->joyy / 128.0f;
 
-            if(state && state->buttons & CONT_DPAD_UP)
-                player.y--;
-            
-            if(state && state->buttons & CONT_DPAD_DOWN)
-                player.y++;
+                // Apply deadzone
+                if (fabsf(joy_x) < 0.1f) joy_x = 0.0f;
+                if (fabsf(joy_y) < 0.1f) joy_y = 0.0f;
 
-
-            // Use joystick for movement
-            if (state) {
-                // Check the X axis of the main joystick
-                if (state->joyx < -10) { // Threshold to avoid sensitivity issues
-                    player.x--;  // Move left
-                } else if (state->joyx > 10) {
-                    player.x++;  // Move right
+                // Check if moving diagonally
+                if (joy_x != 0.0f && joy_y != 0.0f) {
+                    moving_diagonal = true;
                 }
 
-                // Check the Y axis of the main joystick
-                if (state->joyy < -10) {
-                    player.y--;  // Move up
-                } else if (state->joyy > 10) {
-                    player.y++;  // Move down
+                // Calculate movement
+                dx = joy_x * current_speed;
+                dy = joy_y * current_speed;
+            }
+            // Handle D-pad input
+            else {
+                if (state->buttons & CONT_DPAD_LEFT)  dx = -current_speed;
+                if (state->buttons & CONT_DPAD_RIGHT) dx = current_speed;
+                if (state->buttons & CONT_DPAD_UP)    dy = -current_speed;
+                if (state->buttons & CONT_DPAD_DOWN)  dy = current_speed;
+
+                // Check if moving diagonally
+                if (dx != 0.0f && dy != 0.0f) {
+                    moving_diagonal = true;
                 }
             }
 
-            if(state && state->buttons & CONT_B)
-                shootChain();
+            // Apply diagonal movement compensation
+            if (moving_diagonal) {
+                dx *= DIAGONAL_COMPENSATION;
+                dy *= DIAGONAL_COMPENSATION;
+            }
 
+            // Update position with boundary checking
+            float new_x = player.x + dx;
+            float new_y = player.y + dy;
+
+            // Screen boundary checking
+            if (new_x >= player.imgX/2 && new_x <= 640 - player.imgX/2) {
+                player.x = new_x;
+            }
+            if (new_y >= player.imgY/2 && new_y <= 480 - player.imgY/2) {
+                player.y = new_y;
+            }
+
+            // Boost handling (example using B button)
+            if (state->buttons & CONT_A) {
+                player.speed_multiplier = BOOST_MULTIPLIER;
+            } else {
+                player.speed_multiplier = 1.0f;
+            }
+
+            if(state->buttons & CONT_B)
+                shootChain();
         }
+    }
         g_audioSystem.update();
         // Update game state
         updateEnemyWaves();

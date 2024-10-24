@@ -2,16 +2,11 @@
 #include "loadobj.hpp"
 #include "blitobj.hpp"
 #include "game_state.hpp"
+#include "game_constants.hpp"
 #include <cmath>
 #include <algorithm> 
 #include <cstdlib>  // For rand()
-#define SCREEN_WIDTH 640
-#define SCREEN_HEIGHT 480
-#define MAX_X_THRESHOLD 320.0f 
 
-const float ENEMY_BASE_SPEED = 2.0f;
-const float ENEMY_AMPLITUDE = 10.0f;
-const float ENEMY_FREQUENCY = 0.05f;
 
 
 int bullets = 0;

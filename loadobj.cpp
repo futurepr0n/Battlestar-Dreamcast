@@ -6,6 +6,7 @@
 #include <cstdlib>  // For rand()
 #include <ctime>
 #include <png/png.h>
+#include "game_constants.hpp"
 #include "loadobj.hpp"
 #include "movement.hpp"
 
@@ -107,6 +108,9 @@ void loadPlayer(){
 	
 	player.imgX = 64;
 	player.imgY = 64 ;
+
+    player.speed_multiplier = 1.0f;
+    player.current_speed = BASE_PLAYER_SPEED;
     
     player.x = 320; // Half of 640 (screen width)
     player.y = 240; // Half of 480 (screen height)

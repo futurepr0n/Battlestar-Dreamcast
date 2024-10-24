@@ -2,15 +2,8 @@
 #include <cstdlib>  // For rand()
 #include "blitobj.hpp"
 #include "loadobj.hpp"
+#include "game_constants.hpp"
 #include <cmath>
-
-// Constants for movement
-const float ENEMY_BASE_SPEED = 2.0f;
-const float ENEMY_AMPLITUDE = 10.0f;
-const float ENEMY_FREQUENCY = 0.05f;
-const float MAX_X_THRESHOLD = 320.0f;
-
-
 
 
 int nextPowerOf2(int num) {

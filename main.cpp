@@ -23,6 +23,7 @@
 #include "name_selection.hpp" 
 #include "game_state.hpp"
 #include "game_constants.hpp"
+#include "endgamesplash.hpp"
 
 #include <cmath>
 #include <chrono>
@@ -65,7 +66,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    while(1) {
+    while(!gameCompleted) {
     draw_scene();
     cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
 
@@ -153,6 +154,10 @@ int main(int argc, char **argv) {
     unloadEnemyTextures();
     unloadPlayerTextures();
     unloadEnemyBattlestarTextures();
+
+    // Show victory screen
+    showVictoryScreen();
+
     return 0;
 }
 

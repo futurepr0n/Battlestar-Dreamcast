@@ -6,17 +6,16 @@
 #include "game_state.hpp"
 #include <string>
 
+extern "C" {
+    int zlib_getlength(char*);
+} 
+
 /* font texture */
 pvr_ptr_t victory_font_tex;
 pvr_ptr_t victory_back_tex;
 
 extern char wfont[]; // Using same font as main game
 char *victory_data;
-
-extern "C" {
-    int zlib_getlength(char*);
-} 
-
 
 /* init victory background */
 void victory_back_init(void) {

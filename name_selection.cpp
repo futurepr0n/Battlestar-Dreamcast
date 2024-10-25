@@ -1,4 +1,5 @@
 #include "name_selection.hpp"
+#include "game_constants.hpp"
 #include <png/png.h>
 #include <cmath>
 
@@ -70,27 +71,59 @@ void NameSelection::draw() {
     pvr_scene_begin();
 
     pvr_list_begin(PVR_LIST_OP_POLY);
-    // Draw background here if needed
     pvr_list_finish();
 
     pvr_list_begin(PVR_LIST_TR_POLY);
 
+    // Center the player name input field
+    float nameFieldWidth = MAX_NAME_LENGTH * UI_CHAR_WIDTH;
+    float nameStartX = (SCREEN_WIDTH - nameFieldWidth) / 2.0f;
+
     // Draw player name
-    float y = 100.0f;
     for (size_t i = 0; i < MAX_NAME_LENGTH; i++) {
         char c = (i < playerName.length()) ? playerName[i] : '_';
-        drawCharacter(c, 320.0f - (MAX_NAME_LENGTH * 4.0f) + (i * 16.0f), y, i == cursorPosition);
+        drawCharacter(c, nameStartX + (i * UI_CHAR_WIDTH), UI_NAME_START_Y, i == cursorPosition);
     }
 
-    // Draw character selection
-    y = 200.0f;
+    // Draw character selection grid
+    float gridStartY = UI_NAME_START_Y + UI_GRID_OFFSET_Y;
+    
     for (size_t row = 0; row < CHARACTERS.size(); row++) {
-        float x = 320.0f - (CHARACTERS[row].size() * 8.0f);
-        for (size_t col = 0; col < CHARACTERS[row].size(); col++) {
-            drawString(CHARACTERS[row][col], x, y, row == selectedRow && col == selectedCol);
-            x += CHARACTERS[row][col].length() * 16.0f + 8.0f; // Add some spacing between options
+        float rowWidth;
+        float spacingBetweenElements;
+        
+        if (row == CHARACTERS.size() - 1) {
+            // Special handling for bottom row with controls
+            rowWidth = (UI_ARROW_WIDTH * 2) + (UI_CONTROL_WIDTH * 2);
+            spacingBetweenElements = UI_CONTROL_SPACING;
+        } else {
+            // Normal rows (letters and numbers)
+            rowWidth = CHARACTERS[row].size() * UI_CHAR_WIDTH;
+            spacingBetweenElements = UI_NORMAL_SPACING;
         }
-        y += 30.0f; // Move to the next line
+        
+        float totalRowWidth = rowWidth + (spacingBetweenElements * (CHARACTERS[row].size() - 1));
+        float rowStartX = (SCREEN_WIDTH - totalRowWidth) / 2.0f;
+        float currentX = rowStartX;
+        
+        for (size_t col = 0; col < CHARACTERS[row].size(); col++) {
+            const std::string& str = CHARACTERS[row][col];
+            drawString(str, currentX, gridStartY + (row * UI_ROW_SPACING), 
+                      row == selectedRow && col == selectedCol);
+                      
+            // Calculate next position based on element type
+            if (row == CHARACTERS.size() - 1) {
+                // Bottom row spacing
+                if (str == "<" || str == ">") {
+                    currentX += UI_ARROW_WIDTH + spacingBetweenElements;
+                } else {
+                    currentX += UI_CONTROL_WIDTH + spacingBetweenElements;
+                }
+            } else {
+                // Normal character spacing
+                currentX += UI_CHAR_WIDTH + spacingBetweenElements;
+            }
+        }
     }
 
     pvr_list_finish();
@@ -186,9 +219,17 @@ void NameSelection::drawCharacter(char c, float x, float y, bool selected) {
 }
 
 void NameSelection::drawString(const std::string& str, float x, float y, bool selected) {
-    for (char c : str) {
-        drawCharacter(c, x, y, selected);
-        x += 16.0f;
+    if (str.length() > 1) {
+        // For "Del" and "End", spread characters more
+        float spreadFactor = UI_CHAR_WIDTH - 2.0f;  // Slightly tighter spacing for controls
+        float xOffset = 0.0f;
+        for (char c : str) {
+            drawCharacter(c, x + xOffset, y, selected);
+            xOffset += spreadFactor;
+        }
+    } else {
+        // Single characters (letters, numbers, arrows)
+        drawCharacter(str[0], x, y, selected);
     }
 }
 

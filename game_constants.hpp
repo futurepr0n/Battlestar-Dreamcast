@@ -23,4 +23,14 @@ const int MAX_NUM_ENEMIES = 10;
 const int MAX_DAMAGE_STATES = 6;
 const int ENEMIES_PER_WAVE = 5;
 
+// UI Elements
+const float UI_CHAR_WIDTH = 16.0f;
+const float UI_ARROW_WIDTH = 16.0f;
+const float UI_CONTROL_WIDTH = 48.0f;
+const float UI_NORMAL_SPACING = 8.0f;
+const float UI_CONTROL_SPACING = 32.0f;
+const float UI_ROW_SPACING = 30.0f;
+const float UI_NAME_START_Y = 160.0f;
+const float UI_GRID_OFFSET_Y = 60.0f;
+
 #endif // GAME_CONSTANTS_HPP

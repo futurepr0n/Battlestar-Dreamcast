@@ -3,16 +3,14 @@
 #include "blitobj.hpp"
 #include "game_state.hpp"
 #include "game_constants.hpp"
+#include "game_settings.hpp"
 #include <cmath>
 #include <algorithm> 
 #include <cstdlib>  // For rand()
 
-
-
 int bullets = 0;
 int enemybullets = 0;
-const int TOTAL_WAVES = MAX_NUM_ENEMIES / ENEMIES_PER_WAVE;
-
+const int TOTAL_WAVES = ABSOLUTE_MAX_ENEMIES / ENEMIES_PER_WAVE;
 
 inline bool checkSimpleCollision(obj* obj1, obj* obj2) {
     if (!obj1->isalive || !obj2->isalive) return false;
@@ -101,8 +99,9 @@ void handleCollisionDamage(obj* target) {
 }
 
 void moveStuff() {
+    auto& settings = GameSettings::getInstance();
     static float accumulator = 0.0f;
-    accumulator += 1.0f/60.0f; // Assuming 60 FPS, adjust if needed
+    accumulator += 1.0f/60.0f;
 
     // Move bullets
     for (int p = 0; p < MAX_NUM_BULLETS; p++) {
@@ -142,46 +141,49 @@ void moveStuff() {
     }
 
     // Move enemies only if we're not in battlestar phase
-    if (current_wave < TOTAL_WAVES) {
-        for (int enemy_ctr = current_wave * ENEMIES_PER_WAVE; 
-             enemy_ctr < (current_wave + 1) * ENEMIES_PER_WAVE; enemy_ctr++) {
-            if (enemy[enemy_ctr].isalive) {
-                // Update the enemy's horizontal position
-                float speed = ENEMY_BASE_SPEED + ((rand() % 10) * 0.1f);
-                enemy[enemy_ctr].x -= speed;
+    int currentWaveEnemies = settings.getEnemyWaves() * ENEMIES_PER_WAVE;
+    for (int enemy_ctr = current_wave * ENEMIES_PER_WAVE; 
+         enemy_ctr < std::min(currentWaveEnemies, ABSOLUTE_MAX_ENEMIES) && 
+         enemy_ctr < (current_wave + 1) * ENEMIES_PER_WAVE; enemy_ctr++) {
+        if (enemy[enemy_ctr].isalive) {
+            float speed = settings.getEnemyBaseSpeed();
+            enemy[enemy_ctr].x -= speed;
 
-                // Stop at the max X threshold
-                if (enemy[enemy_ctr].x < MAX_X_THRESHOLD) {
-                    enemy[enemy_ctr].x = MAX_X_THRESHOLD;
-                }
+            // Stop at the max X threshold
+            if (enemy[enemy_ctr].x < MAX_X_THRESHOLD) {
+                enemy[enemy_ctr].x = MAX_X_THRESHOLD;
+            }
 
-                // Vertical movement
-                float fluctuation = ENEMY_AMPLITUDE * sin(ENEMY_FREQUENCY * enemy[enemy_ctr].x + enemy[enemy_ctr].phase);
-                enemy[enemy_ctr].y = enemy[enemy_ctr].initialY + fluctuation;
+            // Vertical movement
+            float fluctuation = settings.getEnemyAmplitude() * 
+                        sin(settings.getEnemyFrequency() * enemy[enemy_ctr].x + 
+                            enemy[enemy_ctr].phase);
+            enemy[enemy_ctr].y = enemy[enemy_ctr].initialY + fluctuation;
 
-                // Clamp Y position
-                if (enemy[enemy_ctr].y < 0) enemy[enemy_ctr].y = 0;
-                if (enemy[enemy_ctr].y > 480 - 64) enemy[enemy_ctr].y = 480 - 64;
+            // Clamp Y position
+            if (enemy[enemy_ctr].y < 0) enemy[enemy_ctr].y = 0;
+            if (enemy[enemy_ctr].y > SCREEN_HEIGHT - enemy[enemy_ctr].imgY) 
+                enemy[enemy_ctr].y = SCREEN_HEIGHT - enemy[enemy_ctr].imgY;
 
-                // Update texture based on current damage state
-                if (enemy[enemy_ctr].damage_state >= 0 && 
-                    enemy[enemy_ctr].damage_state < MAX_DAMAGE_STATES) {
-                    enemy[enemy_ctr].texture_pointer = 
-                        enemy[enemy_ctr].damage_textures[enemy[enemy_ctr].damage_state];
-                }
+            // Update texture based on current damage state
+            if (enemy[enemy_ctr].damage_state >= 0 && 
+                enemy[enemy_ctr].damage_state < MAX_DAMAGE_STATES) {
+                enemy[enemy_ctr].texture_pointer = 
+                    enemy[enemy_ctr].damage_textures[enemy[enemy_ctr].damage_state];
+            }
 
-                blitObj(enemy[enemy_ctr]);
-                
-                // Shoot from this enemy
-                if (rand() % 100 < 5) { // 5% chance to shoot per frame
-                    shootEnemyChain(enemy_ctr);
-                }
+            blitObj(enemy[enemy_ctr]);
+            
+            // Shoot from this enemy
+            if (rand() % 100 < 5) { // 5% chance to shoot per frame
+                shootEnemyChain(enemy_ctr);
             }
         }
     }
 
     // Move enemy bullets
-    for (int p = 0; p < MAX_NUM_ENEMY_BULLETS; p++) {
+    int maxEnemyBullets = settings.getMaxEnemyBullets();
+    for (int p = 0; p < std::min(maxEnemyBullets, ABSOLUTE_MAX_ENEMY_BULLETS); p++) {
         if (!enemychain[p].isalive) continue;
 
         enemychain[p].x -= 15.0f;
@@ -228,11 +230,8 @@ void moveStuff() {
 void shootChain() {
     if(bullets < MAX_NUM_BULLETS && chain[bullets].isalive == 0) {
         chain[bullets].isalive = 1;
-        // Position bullet from the center of the player, subtracting half the bullet size
         chain[bullets].x = player.x - (chain[bullets].imgX / 2);
         chain[bullets].y = player.y - (chain[bullets].imgY / 2);
-        
-        // Add fine adjustment to make bullet come from middle of player
         chain[bullets].x += player.imgX / 2;
     }
     
@@ -243,18 +242,25 @@ void shootChain() {
 }
 
 void shootEnemyChain(int enemyIndex) {
-    if (enemybullets < MAX_NUM_ENEMY_BULLETS && enemychain[enemybullets].isalive == 0) {
+    auto& settings = GameSettings::getInstance();
+    int maxEnemyBullets = std::min(settings.getMaxEnemyBullets(), ABSOLUTE_MAX_ENEMY_BULLETS);
+
+    if (enemybullets < maxEnemyBullets && enemychain[enemybullets].isalive == 0) {
         enemychain[enemybullets].isalive = 1;
-        // Position bullet from the center of the enemy, subtracting half the bullet size
-        enemychain[enemybullets].x = enemy[enemyIndex].x - (enemychain[enemybullets].imgX / 2);
-        enemychain[enemybullets].y = enemy[enemyIndex].y - (enemychain[enemybullets].imgY / 2);
         
-        // Add fine adjustment to make bullet come from middle of enemy
-        enemychain[enemybullets].x += enemy[enemyIndex].imgX / 2;
+        if (enemyIndex == -1) {  // Battlestar case
+            enemychain[enemybullets].x = battlestar.x - (enemychain[enemybullets].imgX / 2);
+            enemychain[enemybullets].y = battlestar.y - (enemychain[enemybullets].imgY / 2);
+            enemychain[enemybullets].x += battlestar.imgX / 2;
+        } else {  // Normal enemy case
+            enemychain[enemybullets].x = enemy[enemyIndex].x - (enemychain[enemybullets].imgX / 2);
+            enemychain[enemybullets].y = enemy[enemyIndex].y - (enemychain[enemybullets].imgY / 2);
+            enemychain[enemybullets].x += enemy[enemyIndex].imgX / 2;
+        }
     }
     
     enemybullets++;
-    if (enemybullets >= MAX_NUM_ENEMY_BULLETS) {
+    if (enemybullets >= maxEnemyBullets) {
         enemybullets = 0;
     }
 }

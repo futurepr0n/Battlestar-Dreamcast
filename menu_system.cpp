@@ -1,5 +1,6 @@
 #include "menu_system.hpp"
 #include "name_selection.hpp"
+#include "options_menu.hpp"
 #include <png/png.h>
 
 extern char wfont[];
@@ -181,8 +182,12 @@ std::string showMainMenu() {
                             return playerName;
                         }
                         case 1: // Options
-                            // Implement options menu
-                            break;
+                        {
+                            OptionsMenu optionsMenu;
+                            optionsMenu.run();  // Will return when Back is selected
+                            menu.draw();  // Redraw the main menu when we return
+                            break;  // Don't return here - just break to stay in menu
+                        }
                         case 2: // Exit
                             exit(0);
                     }

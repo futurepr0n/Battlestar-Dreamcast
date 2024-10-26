@@ -9,6 +9,7 @@
 #include "game_constants.hpp"
 #include "loadobj.hpp"
 #include "movement.hpp"
+#include "game_settings.hpp"
 
 // Global texture pointers for enemy damage states
 pvr_ptr_t g_enemy_textures[MAX_DAMAGE_STATES] = {nullptr};
@@ -22,15 +23,16 @@ int enemies_defeated = 0;
 bool wave_in_progress = false;
 bool gameCompleted = false;
 
-const int TOTAL_WAVES = MAX_NUM_ENEMIES / ENEMIES_PER_WAVE;  // 50/5 = 10 waves
+const int TOTAL_WAVES = ABSOLUTE_MAX_ENEMIES / ENEMIES_PER_WAVE;  // 50/5 = 10 waves
+
 
 
 obj player;
 obj starfield;
 obj background;
 obj battlestar;
-obj enemy[MAX_NUM_ENEMIES];
-obj enemychain[MAX_NUM_ENEMY_BULLETS];
+obj enemy[ABSOLUTE_MAX_ENEMIES];
+obj enemychain[ABSOLUTE_MAX_ENEMY_BULLETS];
 obj chain[MAX_NUM_BULLETS];
 
 void loadCharacterData(){
@@ -47,6 +49,7 @@ void loadCharacterData(){
 }
 
 void initializeWave() {
+    auto& settings = GameSettings::getInstance();
     printf("Current wave: %d, Total waves: %d\n", current_wave, TOTAL_WAVES);
     
     // Only spawn regular enemies if we haven't gone through all waves
@@ -54,7 +57,7 @@ void initializeWave() {
         printf("Initializing wave %d of %d\n", current_wave + 1, TOTAL_WAVES);
         for (int i = 0; i < ENEMIES_PER_WAVE; i++) {
             int index = current_wave * ENEMIES_PER_WAVE + i;
-            if (index >= MAX_NUM_ENEMIES) {
+            if (index >= ABSOLUTE_MAX_ENEMIES) {
                 printf("Warning: Trying to spawn enemy beyond MAX_NUM_ENEMIES\n");
                 continue;
             }
@@ -111,8 +114,9 @@ bool isWaveDefeated() {
         return !battlestar.isalive;
     }
     
+    auto& settings = GameSettings::getInstance();
     int waveStartIndex = current_wave * ENEMIES_PER_WAVE;
-    int waveEndIndex = std::min((current_wave + 1) * ENEMIES_PER_WAVE, MAX_NUM_ENEMIES);
+    int waveEndIndex = std::min((current_wave + 1) * ENEMIES_PER_WAVE, settings.getMaxEnemies());
     
     for (int i = waveStartIndex; i < waveEndIndex; i++) {
         if (enemy[i].isalive) {
@@ -246,29 +250,29 @@ void loadEnemyTextures() {
 }
 
 void loadEnemies() {
+    auto& settings = GameSettings::getInstance();
     std::srand(std::time(nullptr));
     loadEnemyTextures();
 
-    for (int i = 0; i < MAX_NUM_ENEMIES; i++) {
+    // Initialize all possible enemy slots
+    for (int i = 0; i < ABSOLUTE_MAX_ENEMIES; i++) {
         enemy[i].x = 640 + (i % ENEMIES_PER_WAVE) * 100;
         enemy[i].y = 100 + (i % ENEMIES_PER_WAVE) * 60;
         enemy[i].imgX = 64;
         enemy[i].imgY = 64;
         enemy[i].health = 50;
-        // Center the hitbox
-        enemy[i].hitbox_offset_x = 16;  // (64 - 32) / 2
-        enemy[i].hitbox_offset_y = 16;  // (64 - 32) / 2
-        enemy[i].hitbox_width = 32;     // Adjust based on actual sprite
-        enemy[i].hitbox_height = 32;    // Adjust based on actual sprite
+        enemy[i].hitbox_offset_x = 16;
+        enemy[i].hitbox_offset_y = 16;
+        enemy[i].hitbox_width = 32;
+        enemy[i].hitbox_height = 32;
         enemy[i].deathPoints = 10;
         enemy[i].initialY = enemy[i].y;
         enemy[i].wave_number = i / ENEMIES_PER_WAVE;
-        enemy[i].frequency = 0.02f + (rand() % 10) * 0.01f;
-        enemy[i].amplitude = 10.0f + (rand() % 30);
+        enemy[i].frequency = settings.getEnemyFrequency() + (rand() % 10) * 0.01f;
+        enemy[i].amplitude = settings.getEnemyAmplitude() + (rand() % 30);
         enemy[i].phase = rand() % 360;
         enemy[i].isalive = 0;
         
-        // Setup textures
         for (int j = 0; j < MAX_DAMAGE_STATES; j++) {
             enemy[i].damage_textures[j] = g_enemy_textures[j];
         }
@@ -287,27 +291,26 @@ void unloadEnemyTextures() {
     }
 }
 
-void loadEnemyChain(){
-	int i;	
-	for(i = 0; i < MAX_NUM_ENEMY_BULLETS; i++){
-		enemychain[i].x = 0;  // enemy[i].x;
-		enemychain[i].y = 0;  // enemy[i].y;
-		enemychain[i].imgX = 8;
-		enemychain[i].imgY = 8;
-		enemychain[i].hitbox_offset_x = 0;
-		enemychain[i].hitbox_offset_y = 0;
-		enemychain[i].hitbox_width = 8;
-		enemychain[i].hitbox_height = 8;
-		enemychain[i].texture_pointer = pvr_mem_malloc(8 * 8 * 2);
-		if(!enemychain[i].texture_pointer){
-			printf("enemychain image failed to load...");
-		}
-		png_to_texture("/rd/enemychain.png", enemychain[i].texture_pointer, PNG_FULL_ALPHA);
-		enemychain[i].isalive = 0;
-		enemychain[i].pctr = 0;
-	}
+void loadEnemyChain() {
+    // Initialize all possible enemy bullet slots
+    for(int i = 0; i < ABSOLUTE_MAX_ENEMY_BULLETS; i++) {
+        enemychain[i].x = 0;
+        enemychain[i].y = 0;
+        enemychain[i].imgX = 8;
+        enemychain[i].imgY = 8;
+        enemychain[i].hitbox_offset_x = 0;
+        enemychain[i].hitbox_offset_y = 0;
+        enemychain[i].hitbox_width = 8;
+        enemychain[i].hitbox_height = 8;
+        enemychain[i].texture_pointer = pvr_mem_malloc(8 * 8 * 2);
+        if(!enemychain[i].texture_pointer) {
+            printf("enemychain image failed to load...");
+        }
+        png_to_texture("/rd/enemychain.png", enemychain[i].texture_pointer, PNG_FULL_ALPHA);
+        enemychain[i].isalive = 0;
+        enemychain[i].pctr = 0;
+    }
 }
-
 
 void loadEnemyBattlestarTextures() {
     const char* damage_image_paths[MAX_DAMAGE_STATES] = {

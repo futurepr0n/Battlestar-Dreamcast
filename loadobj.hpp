@@ -49,16 +49,14 @@ typedef struct{
 	int pctr;
 }obj;
 
+// Arrays sized to maximum possible values
 extern obj player;
-extern obj enemy[MAX_NUM_ENEMIES];
+extern obj enemy[ABSOLUTE_MAX_ENEMIES];
 extern obj chain[MAX_NUM_BULLETS];
-extern obj enemychain[MAX_NUM_ENEMY_BULLETS];
-//obj prs_circle;
-//obj spl_background;
+extern obj enemychain[ABSOLUTE_MAX_ENEMY_BULLETS];
 extern obj background;
 extern obj starfield;
 extern obj battlestar;
-
 
 extern int current_wave;
 extern int enemies_defeated;

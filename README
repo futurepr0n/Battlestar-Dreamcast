@@ -1,0 +1,5 @@
+To send to DC vi IP Tool:
+dc-tool-ip -x battlestar.elf -t 192.168.1.19
+To make (using my settings)
+makedc
+(performs make clean; make; and opens Flycast)

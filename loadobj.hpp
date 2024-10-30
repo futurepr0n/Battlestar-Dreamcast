@@ -40,6 +40,9 @@ typedef struct{
 	int wave_number;  // New field to track which wave the enemy belongs to
 	float speed_multiplier;  // For power-ups and speed modifications
     float current_speed;
+	float velocity_x;    // X component of velocity
+    float velocity_y;    // Y component of velocity
+    float rotation;      // Current rotation in degrees
 	//int dir;
 	void *img_data;
     pvr_ptr_t texture_pointer;

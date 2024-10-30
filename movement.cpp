@@ -183,23 +183,29 @@ void moveStuff() {
 
     // Move enemy bullets
     int maxEnemyBullets = settings.getMaxEnemyBullets();
-    for (int p = 0; p < std::min(maxEnemyBullets, ABSOLUTE_MAX_ENEMY_BULLETS); p++) {
-        if (!enemychain[p].isalive) continue;
+for (int p = 0; p < std::min(maxEnemyBullets, ABSOLUTE_MAX_ENEMY_BULLETS); p++) {
+    if (!enemychain[p].isalive) continue;
 
-        enemychain[p].x -= 15.0f;
-        
-        if (enemychain[p].x + enemychain[p].imgX < 0) {
-            enemychain[p].isalive = 0;
-            continue;
-        }
-
-        if (player.isalive && checkSimpleCollision(&enemychain[p], &player)) {
-            handleCollisionDamage(&player);
-            enemychain[p].isalive = 0;
-        } else {
-            blitObj(enemychain[p]);
-        }
+    // Just use the pre-calculated velocities, no recalculation
+    enemychain[p].x += enemychain[p].velocity_x;
+    enemychain[p].y += enemychain[p].velocity_y;
+    
+    if (enemychain[p].x + enemychain[p].imgX < 0 || 
+        enemychain[p].x > SCREEN_WIDTH ||
+        enemychain[p].y + enemychain[p].imgY < 0 || 
+        enemychain[p].y > SCREEN_HEIGHT) {
+        enemychain[p].isalive = 0;
+        continue;
     }
+
+    if (player.isalive && checkSimpleCollision(&enemychain[p], &player)) {
+        handleCollisionDamage(&player);
+        enemychain[p].isalive = 0;
+    } else {
+        // Use the pre-calculated rotation
+        blitObj(enemychain[p], enemychain[p].rotation);
+    }
+}
 
     // Move battlestar only when it's the active boss
     if (current_wave == TOTAL_WAVES && battlestar.isalive) {
@@ -248,6 +254,7 @@ void shootEnemyChain(int enemyIndex) {
     if (enemybullets < maxEnemyBullets && enemychain[enemybullets].isalive == 0) {
         enemychain[enemybullets].isalive = 1;
         
+        // Set initial bullet position based on shooter
         if (enemyIndex == -1) {  // Battlestar case
             enemychain[enemybullets].x = battlestar.x - (enemychain[enemybullets].imgX / 2);
             enemychain[enemybullets].y = battlestar.y - (enemychain[enemybullets].imgY / 2);
@@ -257,10 +264,28 @@ void shootEnemyChain(int enemyIndex) {
             enemychain[enemybullets].y = enemy[enemyIndex].y - (enemychain[enemybullets].imgY / 2);
             enemychain[enemybullets].x += enemy[enemyIndex].imgX / 2;
         }
-    }
-    
-    enemybullets++;
-    if (enemybullets >= maxEnemyBullets) {
-        enemybullets = 0;
+
+        // Calculate target position (player's center at time of firing)
+        float target_x = player.x + player.imgX / 2;
+        float target_y = player.y + player.imgY / 2;
+
+        // Calculate direction vector from bullet position to target
+        float dx = target_x - enemychain[enemybullets].x;
+        float dy = target_y - enemychain[enemybullets].y;
+
+        // Calculate angle in degrees (only once, when bullet is created)
+        float angle = atan2f(dy, dx) * 180.0f / M_PI;
+        enemychain[enemybullets].rotation = angle;
+
+        // Normalize direction and set initial velocity (only once)
+        float length = sqrtf(dx * dx + dy * dy);
+        float speed = 5.0f;
+        enemychain[enemybullets].velocity_x = (dx / length) * speed;
+        enemychain[enemybullets].velocity_y = (dy / length) * speed;
+
+        enemybullets++;
+        if (enemybullets >= maxEnemyBullets) {
+            enemybullets = 0;
+        }
     }
 }

@@ -33,6 +33,10 @@ int main(int argc, char **argv) {
     pvr_init_defaults();
 
     while(1) {  // Main game loop
+
+        resetGameState();
+        cleanupTextures();
+        
         int done = 0;
         gameCompleted = false;  // Reset game completion flag
 

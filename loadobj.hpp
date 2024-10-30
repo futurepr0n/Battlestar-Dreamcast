@@ -98,6 +98,8 @@ extern bool gameCompleted;  // Add this to track game state
 	void unloadEnemyTextures();
 	void loadEnemyBattlestarTextures();
 	void unloadEnemyBattlestarTextures();
+	void resetGameState();
+	void cleanupTextures();
 	//void loadStatusBar();
 	//void loadHsBar();
 

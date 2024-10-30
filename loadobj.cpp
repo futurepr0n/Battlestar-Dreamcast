@@ -418,6 +418,67 @@ void loadStarfield(){
 	starfield.isalive = 1;
 }
 
+
+void resetGameState() {
+    // Reset game progression variables
+    current_wave = 0;
+    enemies_defeated = 0;
+    wave_in_progress = false;
+    gameCompleted = false;
+
+    // Reset player state
+    player.health = 1000;
+    player.damage_state = 0;
+    player.x = 320;
+    player.y = 240;
+    player.isalive = 1;
+    player.speed_multiplier = 1.0f;
+    player.current_speed = BASE_PLAYER_SPEED;
+
+    // Reset battlestar
+    battlestar.isalive = 0;
+    battlestar.health = 1000;
+    battlestar.damage_state = 0;
+
+    // Reset all enemies
+    for (int i = 0; i < ABSOLUTE_MAX_ENEMIES; i++) {
+        enemy[i].isalive = 0;
+    }
+
+    // Reset all bullets
+    for (int i = 0; i < MAX_NUM_BULLETS; i++) {
+        chain[i].isalive = 0;
+    }
+    for (int i = 0; i < ABSOLUTE_MAX_ENEMY_BULLETS; i++) {
+        enemychain[i].isalive = 0;
+    }
+}
+
+void cleanupTextures() {
+    // Free background textures
+    if (background.texture_pointer) {
+        pvr_mem_free(background.texture_pointer);
+        background.texture_pointer = nullptr;
+    }
+    if (starfield.texture_pointer) {
+        pvr_mem_free(starfield.texture_pointer);
+        starfield.texture_pointer = nullptr;
+    }
+
+    // Free bullet textures
+    for (int i = 0; i < MAX_NUM_BULLETS; i++) {
+        if (chain[i].texture_pointer) {
+            pvr_mem_free(chain[i].texture_pointer);
+            chain[i].texture_pointer = nullptr;
+        }
+    }
+    for (int i = 0; i < ABSOLUTE_MAX_ENEMY_BULLETS; i++) {
+        if (enemychain[i].texture_pointer) {
+            pvr_mem_free(enemychain[i].texture_pointer);
+            enemychain[i].texture_pointer = nullptr;
+        }
+    }
+}
 /*
 void loadStatusBar(){
 	status_bar.x = -60;

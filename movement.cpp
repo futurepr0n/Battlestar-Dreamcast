@@ -253,42 +253,37 @@ void shootEnemyChain(int enemyIndex) {
 
     if (enemybullets < maxEnemyBullets && enemychain[enemybullets].isalive == 0) {
         enemychain[enemybullets].isalive = 1;
-        
-        // Calculate exact center point of shooter considering sprite visual
-        float shooter_x, shooter_y;
-        if (enemyIndex == -1) {
-            shooter_x = battlestar.x + (battlestar.imgX * 0.5f);  // Center of battlestar
-            shooter_y = battlestar.y + (battlestar.imgY * 0.5f);
-        } else {
-            shooter_x = enemy[enemyIndex].x + (enemy[enemyIndex].imgX * 0.5f);  // Center of enemy
-            shooter_y = enemy[enemyIndex].y + (enemy[enemyIndex].imgY * 0.5f);
+
+        // Position chain exactly as before
+        if (enemyIndex == -1) {  // Battlestar case
+            enemychain[enemybullets].x = battlestar.x - ((enemychain[enemybullets].imgX / 2) + 64);
+            enemychain[enemybullets].y = battlestar.y - (enemychain[enemybullets].imgY / 2);
+            enemychain[enemybullets].x += battlestar.imgX / 2;
+        } else {  // Normal enemy case
+            enemychain[enemybullets].x = enemy[enemyIndex].x - ((enemychain[enemybullets].imgX / 2) + 32 );
+            enemychain[enemybullets].y = enemy[enemyIndex].y - (enemychain[enemybullets].imgY / 2);
+            enemychain[enemybullets].x += enemy[enemyIndex].imgX / 2;
         }
 
-        // Position chain bullet - account for chain's actual visual center within its sprite
-        enemychain[enemybullets].x = shooter_x - (enemychain[enemybullets].imgX * 0.5f);
-        enemychain[enemybullets].y = shooter_y - (enemychain[enemybullets].imgY * 0.5f);
+        // Get shooter position for trajectory calculation
+        float shooter_x = enemychain[enemybullets].x;
+        float shooter_y = enemychain[enemybullets].y;
 
-        // Get player's center point
-        float player_center_x = player.x + (player.imgX * 0.5f);
-        float player_center_y = player.y + (player.imgY * 0.5f);
+        // Get player center Y for comparison
+        float player_center_y = player.y + (player.imgY / 2);
 
-        // Calculate target point based on vertical position
+        // Calculate target based on player position
         float target_x, target_y;
-        if (player_center_y <= shooter_y) {  // Player above or level
-            target_x = player.x + player.imgX;  // Right side
+        if (player_center_y <= shooter_y) {
+            target_x = player.x + player.imgX;
             target_y = player_center_y;
-        } else {  // Player below
-            target_x = player.x;  // Left side
+        } else {
+            target_x = player.x;
             target_y = player_center_y;
         }
 
         float dx = target_x - shooter_x;
         float dy = target_y - shooter_y;
-
-        printf("Shooter: (%f, %f), Chain start: (%f, %f), Target: (%f, %f)\n",
-               shooter_x, shooter_y, 
-               enemychain[enemybullets].x, enemychain[enemybullets].y,
-               target_x, target_y);
 
         float length = sqrtf(dx * dx + dy * dy);
         float speed = 5.0f;

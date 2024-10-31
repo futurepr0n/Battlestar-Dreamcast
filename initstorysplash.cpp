@@ -306,12 +306,21 @@ void initStorySplash(){
 
     /* init text */
     text_init();
+     /* Clean up any existing sound stream first */
+    snd_stream_shutdown();
 
     /* init soundstream and mp3 stuff (from mp3test) */
     snd_stream_init();
+
+    //mp3_shutdown(); 
     mp3_init();
 
-    mp3_start("/rd/theme.mp3", 0);
+     /* Start the theme music */
+    if (mp3_start("/rd/theme.mp3", 0) != 0) {
+        printf("Failed to start theme music\n");
+    } else {
+        printf("Theme music started successfully\n");
+    }
 
     /* keep drawing frames until start is pressed */
     while(!done) {
@@ -329,6 +338,21 @@ void initStorySplash(){
     mp3_stop();
     //mp3_shutdown();
     //snd_stream_shutdown();
+
+    // Free memory
+    if (back_tex) {
+        pvr_mem_free(back_tex);
+        back_tex = nullptr;
+    }
+    if (font_tex2) {
+        pvr_mem_free(font_tex2);
+        font_tex2 = nullptr;
+    }
+    if (data) {
+        free(data);
+        data = nullptr;
+    }
+
 
     return;
 

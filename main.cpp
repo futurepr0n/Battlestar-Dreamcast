@@ -139,6 +139,7 @@ int main(int argc, char **argv) {
         g_audioSystem.cleanup();
 
         // Unload textures
+        //cleanupTextures();
         unloadEnemyTextures();
         unloadPlayerTextures();
         unloadEnemyBattlestarTextures();

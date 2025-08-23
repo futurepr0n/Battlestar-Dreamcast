@@ -183,23 +183,29 @@ void moveStuff() {
 
     // Move enemy bullets
     int maxEnemyBullets = settings.getMaxEnemyBullets();
-    for (int p = 0; p < std::min(maxEnemyBullets, ABSOLUTE_MAX_ENEMY_BULLETS); p++) {
-        if (!enemychain[p].isalive) continue;
+for (int p = 0; p < std::min(maxEnemyBullets, ABSOLUTE_MAX_ENEMY_BULLETS); p++) {
+    if (!enemychain[p].isalive) continue;
 
-        enemychain[p].x -= 15.0f;
-        
-        if (enemychain[p].x + enemychain[p].imgX < 0) {
-            enemychain[p].isalive = 0;
-            continue;
-        }
-
-        if (player.isalive && checkSimpleCollision(&enemychain[p], &player)) {
-            handleCollisionDamage(&player);
-            enemychain[p].isalive = 0;
-        } else {
-            blitObj(enemychain[p]);
-        }
+    // Just use the pre-calculated velocities, no recalculation
+    enemychain[p].x += enemychain[p].velocity_x;
+    enemychain[p].y += enemychain[p].velocity_y;
+    
+    if (enemychain[p].x + enemychain[p].imgX < 0 || 
+        enemychain[p].x > SCREEN_WIDTH ||
+        enemychain[p].y + enemychain[p].imgY < 0 || 
+        enemychain[p].y > SCREEN_HEIGHT) {
+        enemychain[p].isalive = 0;
+        continue;
     }
+
+    if (player.isalive && checkSimpleCollision(&enemychain[p], &player)) {
+        handleCollisionDamage(&player);
+        enemychain[p].isalive = 0;
+    } else {
+        // Use the pre-calculated rotation
+        blitObj(enemychain[p], enemychain[p].rotation);
+    }
+}
 
     // Move battlestar only when it's the active boss
     if (current_wave == TOTAL_WAVES && battlestar.isalive) {
@@ -247,20 +253,55 @@ void shootEnemyChain(int enemyIndex) {
 
     if (enemybullets < maxEnemyBullets && enemychain[enemybullets].isalive == 0) {
         enemychain[enemybullets].isalive = 1;
-        
+
+        // Position chain exactly as before
         if (enemyIndex == -1) {  // Battlestar case
-            enemychain[enemybullets].x = battlestar.x - (enemychain[enemybullets].imgX / 2);
+            enemychain[enemybullets].x = battlestar.x - ((enemychain[enemybullets].imgX / 2) + 64);
             enemychain[enemybullets].y = battlestar.y - (enemychain[enemybullets].imgY / 2);
             enemychain[enemybullets].x += battlestar.imgX / 2;
         } else {  // Normal enemy case
-            enemychain[enemybullets].x = enemy[enemyIndex].x - (enemychain[enemybullets].imgX / 2);
+            enemychain[enemybullets].x = enemy[enemyIndex].x - ((enemychain[enemybullets].imgX / 2) + 32 );
             enemychain[enemybullets].y = enemy[enemyIndex].y - (enemychain[enemybullets].imgY / 2);
             enemychain[enemybullets].x += enemy[enemyIndex].imgX / 2;
         }
-    }
-    
-    enemybullets++;
-    if (enemybullets >= maxEnemyBullets) {
-        enemybullets = 0;
+
+        // Get shooter position for trajectory calculation
+        float shooter_x = enemychain[enemybullets].x;
+        float shooter_y = enemychain[enemybullets].y;
+
+        // Get player center Y for comparison
+        float player_center_y = player.y + (player.imgY / 2);
+
+        // Calculate target based on player position
+        float target_x, target_y;
+        if (player_center_y <= shooter_y) {
+            target_x = player.x + player.imgX;
+            target_y = player_center_y;
+        } else {
+            target_x = player.x;
+            target_y = player_center_y;
+        }
+
+        float dx = target_x - shooter_x;
+        float dy = target_y - shooter_y;
+
+        float length = sqrtf(dx * dx + dy * dy);
+        float speed = 5.0f;
+
+        if (length > 0) {
+            enemychain[enemybullets].velocity_x = (dx / length) * speed;
+            enemychain[enemybullets].velocity_y = (dy / length) * speed;
+            float angle = std::atan2(dy, dx) * 180.0f / M_PI;
+            enemychain[enemybullets].rotation = angle < 0 ? angle + 360.0f : angle;
+        } else {
+            enemychain[enemybullets].velocity_x = speed;
+            enemychain[enemybullets].velocity_y = 0;
+            enemychain[enemybullets].rotation = 0;
+        }
+
+        enemybullets++;
+        if (enemybullets >= maxEnemyBullets) {
+            enemybullets = 0;
+        }
     }
 }

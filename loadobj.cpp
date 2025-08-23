@@ -400,24 +400,38 @@ void loadBackground(){
 	background.isalive = 1;
 }
 
-void loadStarfield(){
-	starfield.x = 0;
-	starfield.y = 0;
-	starfield.imgX = 512;
-	starfield.imgY = 512;
+void loadStarfield() {
+    printf("Starting starfield initialization...\n");  // Debug output
+    
+    // Reset all properties
+    starfield.x = 0;
+    starfield.y = 0;
+    starfield.imgX = 512;
+    starfield.imgY = 512;
+    starfield.isalive = 0;  // Set to 0 first
 
-
+    // Allocate new texture
+    starfield.texture_pointer = nullptr;  // Ensure it's null before allocation
     starfield.texture_pointer = pvr_mem_malloc(512 * 512 * 2);
 
-	if(!starfield.texture_pointer){
-		printf("Starfield image failed to load...");
-	}
+    if (!starfield.texture_pointer) {
+        printf("Failed to allocate memory for starfield texture\n");
+        return;
+    }
     
-    png_to_texture("/rd/starfield_one1.png", starfield.texture_pointer, PNG_MASK_ALPHA);
+    printf("Memory allocated for starfield texture\n");  // Debug output
 
-	starfield.isalive = 1;
+    // Try to load the texture
+    if (png_to_texture("/rd/starfield_one1.png", starfield.texture_pointer, PNG_MASK_ALPHA) < 0) {
+        printf("Failed to load starfield texture from PNG\n");
+        pvr_mem_free(starfield.texture_pointer);
+        starfield.texture_pointer = nullptr;
+        return;
+    }
+    
+    printf("Starfield texture loaded successfully\n");  // Debug output
+    starfield.isalive = 1;
 }
-
 
 void resetGameState() {
     // Reset game progression variables
@@ -455,15 +469,25 @@ void resetGameState() {
 }
 
 void cleanupTextures() {
+    printf("Starting texture cleanup...\n");  // Debug output
+    
     // Free background textures
     if (background.texture_pointer) {
         pvr_mem_free(background.texture_pointer);
         background.texture_pointer = nullptr;
+        printf("Background texture freed\n");
     }
+    
     if (starfield.texture_pointer) {
         pvr_mem_free(starfield.texture_pointer);
         starfield.texture_pointer = nullptr;
+        printf("Starfield texture freed\n");
     }
+
+    // Reset starfield properties
+    starfield.x = 0;
+    starfield.y = 0;
+    starfield.isalive = 0;
 
     // Free bullet textures
     for (int i = 0; i < MAX_NUM_BULLETS; i++) {
@@ -472,12 +496,15 @@ void cleanupTextures() {
             chain[i].texture_pointer = nullptr;
         }
     }
+    
     for (int i = 0; i < ABSOLUTE_MAX_ENEMY_BULLETS; i++) {
         if (enemychain[i].texture_pointer) {
             pvr_mem_free(enemychain[i].texture_pointer);
             enemychain[i].texture_pointer = nullptr;
         }
     }
+
+    printf("Texture cleanup completed\n");  // Debug output
 }
 /*
 void loadStatusBar(){

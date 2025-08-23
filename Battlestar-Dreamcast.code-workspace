@@ -92,7 +92,9 @@
 			"thread": "cpp",
 			"cinttypes": "cpp",
 			"typeindex": "cpp",
-			"variant": "cpp"
+			"variant": "cpp",
+			"__threading_support": "cpp",
+			"execution": "cpp"
 		}
 	}
 }

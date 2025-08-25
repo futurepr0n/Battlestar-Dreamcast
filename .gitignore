@@ -5,3 +5,4 @@
 romdisk/
 .vscode/
 *.code-workspace
+network-examples/

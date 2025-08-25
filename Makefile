@@ -1,5 +1,5 @@
 TARGET = battlestar.elf
-OBJS = main.o game_utils.o game_state.o menu_system.o name_selection.o renderer.o audio_system.o loadobj.o blitobj.o movement.o initstorysplash.o endgamesplash.o wfont.o romdisk.o game_settings.o options_menu.o
+OBJS = main.o game_utils.o game_state.o menu_system.o name_selection.o renderer.o audio_system.o loadobj.o blitobj.o movement.o initstorysplash.o endgamesplash.o wfont.o romdisk.o game_settings.o options_menu.o input_system.o wave_manager.o bullet_manager.o texture_resource.o font_manager.o spatial_grid.o debug_utils.o performance_cache.o game_engine.o
 KOS_ROMDISK_DIR = romdisk
 
 all: rm-elf $(TARGET)
@@ -15,7 +15,7 @@ rm-elf:
 	-rm -f $(TARGET) romdisk.*
 
 $(TARGET): $(OBJS) 
-	kos-c++ -o $(TARGET) $(OBJS) -lpng -lz -lmp3 -lmodplug -lm
+	kos-c++ -o $(TARGET) $(OBJS) -lpng -lz -lmp3 -lmodplug -lm -lkallisti
 
 wfont.o: wfont.bin
 	$(KOS_BASE)/utils/bin2o/bin2o wfont.bin wfont wfont.o

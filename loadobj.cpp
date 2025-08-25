@@ -10,11 +10,21 @@
 #include "loadobj.hpp"
 #include "movement.hpp"
 #include "game_settings.hpp"
+#include "texture_resource.hpp"
 
 // Global texture pointers for enemy damage states
 pvr_ptr_t g_enemy_textures[MAX_DAMAGE_STATES] = {nullptr};
 pvr_ptr_t g_player_textures[MAX_DAMAGE_STATES] = {nullptr};
 pvr_ptr_t g_enemybattlestar_textures[MAX_DAMAGE_STATES] = {nullptr};
+
+// RAII TextureResource storage
+TextureResource g_player_texture_resources[MAX_DAMAGE_STATES];
+TextureResource g_enemy_texture_resources[MAX_DAMAGE_STATES];
+TextureResource g_battlestar_texture_resources[MAX_DAMAGE_STATES];
+TextureResource g_bullet_texture_resources[MAX_NUM_BULLETS];
+TextureResource g_enemy_bullet_texture_resources[ABSOLUTE_MAX_ENEMY_BULLETS];
+TextureResource g_background_texture_resource;
+TextureResource g_starfield_texture_resource;
 
 
 // Initialize new variables
@@ -160,12 +170,13 @@ void loadPlayerTextures() {
     };
 
     for (int i = 0; i < MAX_DAMAGE_STATES; i++) {
-        g_player_textures[i] = pvr_mem_malloc(64 * 64 * 2);
-        if (!g_player_textures[i]) {
-            printf("Failed to allocate memory for player damage texture %d\n", i);
-            continue;
+        if (g_player_texture_resources[i].allocate(64, 64)) {
+            png_to_texture(player_damage_image_paths[i], g_player_texture_resources[i].get(), PNG_FULL_ALPHA);
+            g_player_textures[i] = g_player_texture_resources[i].get();
+        } else {
+            printf("Failed to load player damage texture %d: %s\n", i, player_damage_image_paths[i]);
+            g_player_textures[i] = nullptr;
         }
-        png_to_texture(player_damage_image_paths[i], g_player_textures[i], PNG_FULL_ALPHA);
     }
 }
 
@@ -199,10 +210,8 @@ void loadPlayer(){
 
 void unloadPlayerTextures() {
     for (int i = 0; i < MAX_DAMAGE_STATES; i++) {
-        if (g_player_textures[i]) {
-            pvr_mem_free(g_player_textures[i]);
-            g_player_textures[i] = nullptr;
-        }
+        g_player_texture_resources[i].release();
+        g_player_textures[i] = nullptr;
     }
 }
 
@@ -218,11 +227,13 @@ void loadChain() {
         chain[i].hitbox_offset_y = 0;
         chain[i].hitbox_width = 8;
         chain[i].hitbox_height = 8;
-        chain[i].texture_pointer = pvr_mem_malloc(8 * 8 * 2);
-        if(!chain[i].texture_pointer) {
+        if (g_bullet_texture_resources[i].allocate(8, 8)) {
+            png_to_texture("/rd/chain.png", g_bullet_texture_resources[i].get(), PNG_FULL_ALPHA);
+            chain[i].texture_pointer = g_bullet_texture_resources[i].get();
+        } else {
             printf("chain image failed to load...");
+            chain[i].texture_pointer = nullptr;
         }
-        png_to_texture("/rd/chain.png", chain[i].texture_pointer, PNG_FULL_ALPHA);
         chain[i].isalive = 0;
         chain[i].pctr = 0;
     }
@@ -239,13 +250,13 @@ void loadEnemyTextures() {
     };
 
     for (int i = 0; i < MAX_DAMAGE_STATES; i++) {
-        g_enemy_textures[i] = pvr_mem_malloc(64 * 64 * 2);
-        if (!g_enemy_textures[i]) {
-            printf("Failed to allocate memory for enemy damage texture %d\n", i);
-            // Handle error (e.g., reduce texture quality or use fewer damage states)
-            continue;
+        if (g_enemy_texture_resources[i].allocate(64, 64)) {
+            png_to_texture(damage_image_paths[i], g_enemy_texture_resources[i].get(), PNG_FULL_ALPHA);
+            g_enemy_textures[i] = g_enemy_texture_resources[i].get();
+        } else {
+            printf("Failed to load enemy damage texture %d: %s\n", i, damage_image_paths[i]);
+            g_enemy_textures[i] = nullptr;
         }
-        png_to_texture(damage_image_paths[i], g_enemy_textures[i], PNG_FULL_ALPHA);
     }
 }
 
@@ -284,10 +295,8 @@ void loadEnemies() {
 // Add this function to your loadobj.cpp
 void unloadEnemyTextures() {
     for (int i = 0; i < MAX_DAMAGE_STATES; i++) {
-        if (g_enemy_textures[i]) {
-            pvr_mem_free(g_enemy_textures[i]);
-            g_enemy_textures[i] = nullptr;
-        }
+        g_enemy_texture_resources[i].release();
+        g_enemy_textures[i] = nullptr;
     }
 }
 
@@ -302,11 +311,13 @@ void loadEnemyChain() {
         enemychain[i].hitbox_offset_y = 0;
         enemychain[i].hitbox_width = 8;
         enemychain[i].hitbox_height = 8;
-        enemychain[i].texture_pointer = pvr_mem_malloc(8 * 8 * 2);
-        if(!enemychain[i].texture_pointer) {
+        if (g_enemy_bullet_texture_resources[i].allocate(8, 8)) {
+            png_to_texture("/rd/enemychain.png", g_enemy_bullet_texture_resources[i].get(), PNG_FULL_ALPHA);
+            enemychain[i].texture_pointer = g_enemy_bullet_texture_resources[i].get();
+        } else {
             printf("enemychain image failed to load...");
+            enemychain[i].texture_pointer = nullptr;
         }
-        png_to_texture("/rd/enemychain.png", enemychain[i].texture_pointer, PNG_FULL_ALPHA);
         enemychain[i].isalive = 0;
         enemychain[i].pctr = 0;
     }
@@ -323,12 +334,13 @@ void loadEnemyBattlestarTextures() {
     };
 	
 	for (int i = 0; i < MAX_DAMAGE_STATES; i++) {
-        g_enemybattlestar_textures[i] = pvr_mem_malloc(128 * 128 * 2);
-        if (!g_enemybattlestar_textures[i]) {
-            printf("Failed to allocate memory for player damage texture %d\n", i);
-            continue;
+        if (g_battlestar_texture_resources[i].allocate(128, 128)) {
+            png_to_texture(damage_image_paths[i], g_battlestar_texture_resources[i].get(), PNG_FULL_ALPHA);
+            g_enemybattlestar_textures[i] = g_battlestar_texture_resources[i].get();
+        } else {
+            printf("Failed to load battlestar damage texture %d: %s\n", i, damage_image_paths[i]);
+            g_enemybattlestar_textures[i] = nullptr;
         }
-        png_to_texture(damage_image_paths[i], g_enemybattlestar_textures[i], PNG_FULL_ALPHA);
     }
 }
 
@@ -373,10 +385,8 @@ void loadEnemyBattlestar() {
 // Add this function to your loadobj.cpp
 void unloadEnemyBattlestarTextures() {
     for (int i = 0; i < MAX_DAMAGE_STATES; i++) {
-        if (g_enemybattlestar_textures[i]) {
-            pvr_mem_free(g_enemybattlestar_textures[i]);
-            g_enemybattlestar_textures[i] = nullptr;
-        }
+        g_battlestar_texture_resources[i].release();
+        g_enemybattlestar_textures[i] = nullptr;
     }
 }
 
@@ -389,12 +399,13 @@ void loadBackground(){
 	//background.imgX = 480;
 	//background.imgY = 272;
     
-    background.texture_pointer = pvr_mem_malloc(512 * 512 * 2);
-
-    if(!background.texture_pointer){
-		printf("background image failed to load...");
-	}
-    png_to_texture("/rd/space_bg1.png", background.texture_pointer, PNG_NO_ALPHA);
+    if (g_background_texture_resource.allocate(512, 512)) {
+        png_to_texture("/rd/space_bg1.png", g_background_texture_resource.get(), PNG_NO_ALPHA);
+        background.texture_pointer = g_background_texture_resource.get();
+    } else {
+        printf("background image failed to load...");
+        background.texture_pointer = nullptr;
+    }
 
 
 	background.isalive = 1;
@@ -410,27 +421,17 @@ void loadStarfield() {
     starfield.imgY = 512;
     starfield.isalive = 0;  // Set to 0 first
 
-    // Allocate new texture
-    starfield.texture_pointer = nullptr;  // Ensure it's null before allocation
-    starfield.texture_pointer = pvr_mem_malloc(512 * 512 * 2);
-
-    if (!starfield.texture_pointer) {
-        printf("Failed to allocate memory for starfield texture\n");
-        return;
-    }
-    
-    printf("Memory allocated for starfield texture\n");  // Debug output
-
-    // Try to load the texture
-    if (png_to_texture("/rd/starfield_one1.png", starfield.texture_pointer, PNG_MASK_ALPHA) < 0) {
-        printf("Failed to load starfield texture from PNG\n");
-        pvr_mem_free(starfield.texture_pointer);
+    // Load texture using TextureResource
+    if (g_starfield_texture_resource.allocate(512, 512)) {
+        png_to_texture("/rd/starfield_one1.png", g_starfield_texture_resource.get(), PNG_MASK_ALPHA);
+        starfield.texture_pointer = g_starfield_texture_resource.get();
+        printf("Starfield texture loaded successfully\n");  // Debug output
+        starfield.isalive = 1;
+    } else {
+        printf("Failed to load starfield texture\n");
         starfield.texture_pointer = nullptr;
-        return;
+        starfield.isalive = 0;
     }
-    
-    printf("Starfield texture loaded successfully\n");  // Debug output
-    starfield.isalive = 1;
 }
 
 void resetGameState() {
@@ -471,37 +472,29 @@ void resetGameState() {
 void cleanupTextures() {
     printf("Starting texture cleanup...\n");  // Debug output
     
-    // Free background textures
-    if (background.texture_pointer) {
-        pvr_mem_free(background.texture_pointer);
-        background.texture_pointer = nullptr;
-        printf("Background texture freed\n");
-    }
+    // Reset TextureResource objects (automatic cleanup)
+    g_background_texture_resource.release();
+    background.texture_pointer = nullptr;
+    printf("Background texture freed\n");
     
-    if (starfield.texture_pointer) {
-        pvr_mem_free(starfield.texture_pointer);
-        starfield.texture_pointer = nullptr;
-        printf("Starfield texture freed\n");
-    }
+    g_starfield_texture_resource.release();
+    starfield.texture_pointer = nullptr;
+    printf("Starfield texture freed\n");
 
     // Reset starfield properties
     starfield.x = 0;
     starfield.y = 0;
     starfield.isalive = 0;
 
-    // Free bullet textures
+    // Reset bullet texture resources
     for (int i = 0; i < MAX_NUM_BULLETS; i++) {
-        if (chain[i].texture_pointer) {
-            pvr_mem_free(chain[i].texture_pointer);
-            chain[i].texture_pointer = nullptr;
-        }
+        g_bullet_texture_resources[i].release();
+        chain[i].texture_pointer = nullptr;
     }
     
     for (int i = 0; i < ABSOLUTE_MAX_ENEMY_BULLETS; i++) {
-        if (enemychain[i].texture_pointer) {
-            pvr_mem_free(enemychain[i].texture_pointer);
-            enemychain[i].texture_pointer = nullptr;
-        }
+        g_enemy_bullet_texture_resources[i].release();
+        enemychain[i].texture_pointer = nullptr;
     }
 
     printf("Texture cleanup completed\n");  // Debug output

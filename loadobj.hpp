@@ -8,9 +8,6 @@
 
 #include <kos.h>
 #include "game_constants.hpp"
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
 //int bullets = 0;
@@ -106,7 +103,4 @@ extern bool gameCompleted;  // Add this to track game state
 	//void loadStatusBar();
 	//void loadHsBar();
 
-#ifdef __cplusplus
-}
-#endif
 #endif

@@ -3,11 +3,12 @@
 #include "movement.hpp"
 #include "game_utils.hpp"
 #include "game_state.hpp"
+#include "font_manager.hpp"
 #include <string>
 #include <png/png.h>
 
 pvr_ptr_t font_tex;  // Add this line
-extern char wfont[];
+extern uint8 wfont[];
 
 extern obj background;
 extern obj starfield;
@@ -182,32 +183,11 @@ void draw_starfield(float x1, float y1, float z1, float a, float r, float g, flo
 }
 
 void load_font_texture() {
-    int i, x, y, c;
-    unsigned short * temp_tex;
-
-    font_tex = pvr_mem_malloc(256 * 256 * 2);
-    temp_tex = (unsigned short *)malloc(256 * 128 * 2);
-
-    c = 0;
-
-    for(y = 0; y < 128 ; y += 16)
-        for(x = 0; x < 256 ; x += 8) {
-            for(i = 0; i < 16; i++) {
-                temp_tex[x + (y + i) * 256 + 0] = 0xffff * ((wfont[c + i] & 0x80) >> 7);
-                temp_tex[x + (y + i) * 256 + 1] = 0xffff * ((wfont[c + i] & 0x40) >> 6);
-                temp_tex[x + (y + i) * 256 + 2] = 0xffff * ((wfont[c + i] & 0x20) >> 5);
-                temp_tex[x + (y + i) * 256 + 3] = 0xffff * ((wfont[c + i] & 0x10) >> 4);
-                temp_tex[x + (y + i) * 256 + 4] = 0xffff * ((wfont[c + i] & 0x08) >> 3);
-                temp_tex[x + (y + i) * 256 + 5] = 0xffff * ((wfont[c + i] & 0x04) >> 2);
-                temp_tex[x + (y + i) * 256 + 6] = 0xffff * ((wfont[c + i] & 0x02) >> 1);
-                temp_tex[x + (y + i) * 256 + 7] = 0xffff * (wfont[c + i] & 0x01);
-            }
-
-            c += 16;
-        }
-
-    pvr_txr_load_ex(temp_tex, font_tex, 256, 256, PVR_TXRLOAD_16BPP);
-    free(temp_tex);
+    auto& fontManager = FontManager::getInstance();
+    if (!fontManager.isInitialized()) {
+        fontManager.initialize();
+    }
+    font_tex = fontManager.getFontTexture();
 }
 
 void draw_text(const char* text, float x, float y, float r = 1.0f, float g = 1.0f, float b = 1.0f) {
@@ -279,7 +259,6 @@ void draw_scene(void) {
     pvr_list_begin(PVR_LIST_TR_POLY);
     draw_scrolling_background(x_offset);
     
-    float deltaTime = getDeltaTime();
     moveStuff();
     draw_ship(player);
     //blitEnemies(deltaTime);
